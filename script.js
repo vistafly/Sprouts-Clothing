@@ -1,3 +1,19 @@
+// ===== STRIPE & INVENTORY MANAGEMENT SYSTEM =====
+
+// ===== CONFIGURATION =====
+const CONFIG = {
+    stripe: {
+        publishableKey: 'pk_test_51S5YU8FKyDLT77ug2RZh3OVCAzDsHVPZIvyBWxjuTcylKHLcza1XhFTjEzpWbdgilo5fpTl16ivKardNXM23c6AI00eknKjdiV'
+    },
+    webhook: {
+        url: 'https://hook.us2.make.com/lowxqmqavxlrkc9c82pf4h8c8a58ax88'
+    },
+    inventory: {
+        lowStockThreshold: 5,
+        ownerEmail: 'maezron54@gmail.com'
+    }
+};
+
 // ===== PRODUCT DATABASE =====
 const products = [
     // Boys Clothing (15 items)
@@ -8,7 +24,10 @@ const products = [
         price: 89.99, 
         stock: 12, 
         image: "https://images.unsplash.com/photo-1516962126636-27ad087061cc?w=600&h=800&fit=crop&auto=format", 
-        description: "Premium heritage denim with vintage wash" 
+        description: "Premium heritage denim with vintage wash",
+        sku: "HDJ-001",
+        weight: 0.8,
+        dimensions: "Medium fit"
     },
     { 
         id: 2, 
@@ -17,7 +36,10 @@ const products = [
         price: 45.99, 
         stock: 8, 
         image: "https://images.unsplash.com/photo-1503944168849-ce5ccdaeb477?w=600&h=800&fit=crop&auto=format", 
-        description: "Sustainably sourced organic cotton polo" 
+        description: "Sustainably sourced organic cotton polo",
+        sku: "OCP-002",
+        weight: 0.3,
+        dimensions: "Regular fit"
     },
     { 
         id: 3, 
@@ -26,7 +48,10 @@ const products = [
         price: 65.99, 
         stock: 15, 
         image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Technical fabric with moisture-wicking properties" 
+        description: "Technical fabric with moisture-wicking properties",
+        sku: "PJ-003",
+        weight: 0.4,
+        dimensions: "Athletic fit"
     },
     { 
         id: 4, 
@@ -35,7 +60,10 @@ const products = [
         price: 38.99, 
         stock: 3, 
         image: "https://images.unsplash.com/photo-1576253566935-e4e1789ad4ac?w=600&h=800&fit=crop&auto=format", 
-        description: "Limited edition artist collaboration" 
+        description: "Limited edition artist collaboration",
+        sku: "AST-004",
+        weight: 0.2,
+        dimensions: "Regular fit"
     },
     { 
         id: 5, 
@@ -45,7 +73,10 @@ const products = [
         stock: 0, 
         image: "https://images.unsplash.com/photo-1506629905607-bb4d88e96b2c?w=600&h=800&fit=crop&auto=format", 
         description: "Precisely tailored summer essential", 
-        preorder: true 
+        preorder: true,
+        sku: "TCS-005",
+        weight: 0.3,
+        dimensions: "Tailored fit"
     },
     { 
         id: 6, 
@@ -54,7 +85,10 @@ const products = [
         price: 98.99, 
         stock: 20, 
         image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Ultra-soft merino wool blend" 
+        description: "Ultra-soft merino wool blend",
+        sku: "MWH-006",
+        weight: 0.6,
+        dimensions: "Relaxed fit"
     },
     { 
         id: 7, 
@@ -63,7 +97,10 @@ const products = [
         price: 68.99, 
         stock: 6, 
         image: "https://images.unsplash.com/photo-1503944168849-ce5ccdaeb477?w=600&h=800&fit=crop&auto=format", 
-        description: "Classic Oxford weave in premium cotton" 
+        description: "Classic Oxford weave in premium cotton",
+        sku: "OBD-007",
+        weight: 0.4,
+        dimensions: "Classic fit"
     },
     { 
         id: 8, 
@@ -72,7 +109,10 @@ const products = [
         price: 75.99, 
         stock: 11, 
         image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Durable ripstop fabric with functional pockets" 
+        description: "Durable ripstop fabric with functional pockets",
+        sku: "ACP-008",
+        weight: 0.5,
+        dimensions: "Relaxed fit"
     },
     { 
         id: 9, 
@@ -81,7 +121,10 @@ const products = [
         price: 42.99, 
         stock: 25, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Premium wool blend with leather strap" 
+        description: "Premium wool blend with leather strap",
+        sku: "WBC-009",
+        weight: 0.1,
+        dimensions: "Adjustable"
     },
     { 
         id: 10, 
@@ -90,7 +133,10 @@ const products = [
         price: 124.99, 
         stock: 4, 
         image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&h=800&fit=crop&auto=format", 
-        description: "Handcrafted Italian leather construction" 
+        description: "Handcrafted Italian leather construction",
+        sku: "ILS-010",
+        weight: 0.7,
+        dimensions: "True to size"
     },
     { 
         id: 11, 
@@ -99,7 +145,10 @@ const products = [
         price: 89.99, 
         stock: 9, 
         image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Performance fabric with moisture management" 
+        description: "Performance fabric with moisture management",
+        sku: "TTS-011",
+        weight: 0.9,
+        dimensions: "Athletic fit"
     },
     { 
         id: 12, 
@@ -108,7 +157,10 @@ const products = [
         price: 145.99, 
         stock: 7, 
         image: "https://images.unsplash.com/photo-1516962126636-27ad087061cc?w=600&h=800&fit=crop&auto=format", 
-        description: "Responsibly sourced down insulation" 
+        description: "Responsibly sourced down insulation",
+        sku: "DPJ-012",
+        weight: 1.2,
+        dimensions: "Regular fit"
     },
     { 
         id: 13, 
@@ -117,7 +169,10 @@ const products = [
         price: 48.99, 
         stock: 18, 
         image: "https://images.unsplash.com/photo-1503944168849-ce5ccdaeb477?w=600&h=800&fit=crop&auto=format", 
-        description: "Elevated chambray with mother-of-pearl buttons" 
+        description: "Elevated chambray with mother-of-pearl buttons",
+        sku: "CSS-013",
+        weight: 0.3,
+        dimensions: "School fit"
     },
     { 
         id: 14, 
@@ -126,7 +181,10 @@ const products = [
         price: 39.99, 
         stock: 14, 
         image: "https://images.unsplash.com/photo-1506629905607-bb4d88e96b2c?w=600&h=800&fit=crop&auto=format", 
-        description: "Technical swim fabric with UPF protection" 
+        description: "Technical swim fabric with UPF protection",
+        sku: "QDS-014",
+        weight: 0.2,
+        dimensions: "Swim fit"
     },
     { 
         id: 15, 
@@ -135,7 +193,10 @@ const products = [
         price: 35.99, 
         stock: 2, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Hand-tied silk in classic patterns" 
+        description: "Hand-tied silk in classic patterns",
+        sku: "SBT-015",
+        weight: 0.05,
+        dimensions: "Adjustable"
     },
 
     // Girls Clothing (15 items)
@@ -146,7 +207,10 @@ const products = [
         price: 95.99, 
         stock: 10, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Authentic Liberty of London print" 
+        description: "Authentic Liberty of London print",
+        sku: "LPD-016",
+        weight: 0.4,
+        dimensions: "A-line fit"
     },
     { 
         id: 17, 
@@ -155,7 +219,10 @@ const products = [
         price: 78.99, 
         stock: 5, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Heritage denim with vintage-inspired details" 
+        description: "Heritage denim with vintage-inspired details",
+        sku: "VDO-017",
+        weight: 0.6,
+        dimensions: "Relaxed fit"
     },
     { 
         id: 18, 
@@ -164,7 +231,10 @@ const products = [
         price: 58.99, 
         stock: 8, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Multi-layer tulle with silk lining" 
+        description: "Multi-layer tulle with silk lining",
+        sku: "TPS-018",
+        weight: 0.3,
+        dimensions: "Flare fit"
     },
     { 
         id: 19, 
@@ -173,7 +243,10 @@ const products = [
         price: 125.99, 
         stock: 12, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Pure cashmere in seasonal colors" 
+        description: "Pure cashmere in seasonal colors",
+        sku: "CC-019",
+        weight: 0.4,
+        dimensions: "Regular fit"
     },
     { 
         id: 20, 
@@ -182,7 +255,10 @@ const products = [
         price: 35.99, 
         stock: 0, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Certified organic cotton with stretch" 
+        description: "Certified organic cotton with stretch",
+        sku: "OCL-020",
+        weight: 0.2,
+        dimensions: "Stretch fit"
     },
     { 
         id: 21, 
@@ -191,7 +267,10 @@ const products = [
         price: 165.99, 
         stock: 6, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Pure silk with hand-embroidered details" 
+        description: "Pure silk with hand-embroidered details",
+        sku: "SPD-021",
+        weight: 0.5,
+        dimensions: "Princess fit"
     },
     { 
         id: 22, 
@@ -200,7 +279,10 @@ const products = [
         price: 72.99, 
         stock: 16, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Tailored pinafore in premium navy wool" 
+        description: "Tailored pinafore in premium navy wool",
+        sku: "SP-022",
+        weight: 0.5,
+        dimensions: "School fit"
     },
     { 
         id: 23, 
@@ -209,7 +291,10 @@ const products = [
         price: 68.99, 
         stock: 11, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Bamboo fiber with temperature regulation" 
+        description: "Bamboo fiber with temperature regulation",
+        sku: "BPS-023",
+        weight: 0.4,
+        dimensions: "Comfortable fit"
     },
     { 
         id: 24, 
@@ -218,7 +303,10 @@ const products = [
         price: 89.99, 
         stock: 3, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Italian leather with cushioned sole" 
+        description: "Italian leather with cushioned sole",
+        sku: "LBF-024",
+        weight: 0.4,
+        dimensions: "True to size"
     },
     { 
         id: 25, 
@@ -227,7 +315,10 @@ const products = [
         price: 28.99, 
         stock: 22, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Pure silk scrunchies and headbands" 
+        description: "Pure silk scrunchies and headbands",
+        sku: "SHA-025",
+        weight: 0.05,
+        dimensions: "One size"
     },
     { 
         id: 26, 
@@ -236,7 +327,10 @@ const products = [
         price: 185.99, 
         stock: 4, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Luxurious wool blend with satin lining" 
+        description: "Luxurious wool blend with satin lining",
+        sku: "WBC-026",
+        weight: 1.0,
+        dimensions: "Regular fit"
     },
     { 
         id: 27, 
@@ -245,7 +339,10 @@ const products = [
         price: 44.99, 
         stock: 13, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Technical fabric for active wear" 
+        description: "Technical fabric for active wear",
+        sku: "PS-027",
+        weight: 0.2,
+        dimensions: "Athletic fit"
     },
     { 
         id: 28, 
@@ -254,7 +351,10 @@ const products = [
         price: 85.99, 
         stock: 9, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "French linen with delicate embroidery" 
+        description: "French linen with delicate embroidery",
+        sku: "LS-028",
+        weight: 0.3,
+        dimensions: "Flowy fit"
     },
     { 
         id: 29, 
@@ -263,7 +363,10 @@ const products = [
         price: 65.99, 
         stock: 1, 
         image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Precisely pleated wool blend" 
+        description: "Precisely pleated wool blend",
+        sku: "PSS-029",
+        weight: 0.4,
+        dimensions: "School fit"
     },
     { 
         id: 30, 
@@ -272,7 +375,10 @@ const products = [
         price: 92.99, 
         stock: 7, 
         image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Waterproof fabric with breathable lining" 
+        description: "Waterproof fabric with breathable lining",
+        sku: "RH-030",
+        weight: 0.6,
+        dimensions: "Regular fit"
     },
 
     // Women's Jewelry (10 items)
@@ -283,7 +389,10 @@ const products = [
         price: 285.99, 
         stock: 5, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Lustrous Tahitian pearls with 18k clasp" 
+        description: "Lustrous Tahitian pearls with 18k clasp",
+        sku: "TPN-031",
+        weight: 0.1,
+        dimensions: "18 inch length"
     },
     { 
         id: 32, 
@@ -292,7 +401,10 @@ const products = [
         price: 445.99, 
         stock: 3, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "0.25ct diamonds in 14k white gold" 
+        description: "0.25ct diamonds in 14k white gold",
+        sku: "DSE-032",
+        weight: 0.02,
+        dimensions: "6mm diameter"
     },
     { 
         id: 33, 
@@ -301,7 +413,10 @@ const products = [
         price: 195.99, 
         stock: 8, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "18k gold with vintage-inspired design" 
+        description: "18k gold with vintage-inspired design",
+        sku: "VGB-033",
+        weight: 0.08,
+        dimensions: "7.5 inch length"
     },
     { 
         id: 34, 
@@ -310,7 +425,10 @@ const products = [
         price: 125.99, 
         stock: 12, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Handcrafted sterling silver collection" 
+        description: "Handcrafted sterling silver collection",
+        sku: "SSRS-034",
+        weight: 0.05,
+        dimensions: "Sizes 6-8"
     },
     { 
         id: 35, 
@@ -320,7 +438,10 @@ const products = [
         stock: 0, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
         description: "Natural sapphire in 14k setting", 
-        preorder: true 
+        preorder: true,
+        sku: "SP-035",
+        weight: 0.03,
+        dimensions: "16 inch chain"
     },
     { 
         id: 36, 
@@ -329,7 +450,10 @@ const products = [
         price: 165.99, 
         stock: 15, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "14k gold hoops in three sizes" 
+        description: "14k gold hoops in three sizes",
+        sku: "GHE-036",
+        weight: 0.04,
+        dimensions: "30mm diameter"
     },
     { 
         id: 37, 
@@ -338,7 +462,10 @@ const products = [
         price: 235.99, 
         stock: 6, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Sterling silver with removable charms" 
+        description: "Sterling silver with removable charms",
+        sku: "CB-037",
+        weight: 0.1,
+        dimensions: "8 inch length"
     },
     { 
         id: 38, 
@@ -347,7 +474,10 @@ const products = [
         price: 385.99, 
         stock: 4, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Bold design in mixed metals" 
+        description: "Bold design in mixed metals",
+        sku: "SCN-038",
+        weight: 0.15,
+        dimensions: "16 inch collar"
     },
     { 
         id: 39, 
@@ -356,7 +486,10 @@ const products = [
         price: 685.99, 
         stock: 2, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "1ct total weight in 14k white gold" 
+        description: "1ct total weight in 14k white gold",
+        sku: "DTB-039",
+        weight: 0.12,
+        dimensions: "7 inch length"
     },
     { 
         id: 40, 
@@ -365,7 +498,10 @@ const products = [
         price: 425.99, 
         stock: 7, 
         image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Natural emerald with diamond accents" 
+        description: "Natural emerald with diamond accents",
+        sku: "ECR-040",
+        weight: 0.06,
+        dimensions: "Size 7"
     },
 
     // Accessories (5 items)
@@ -376,7 +512,10 @@ const products = [
         price: 58.99, 
         stock: 18, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "UPF 50+ protection with chin strap" 
+        description: "UPF 50+ protection with chin strap",
+        sku: "WBSH-041",
+        weight: 0.3,
+        dimensions: "One size fits most"
     },
     { 
         id: 42, 
@@ -385,7 +524,10 @@ const products = [
         price: 45.99, 
         stock: 4, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Ultra-soft merino wool in seasonal colors" 
+        description: "Ultra-soft merino wool in seasonal colors",
+        sku: "MWB-042",
+        weight: 0.1,
+        dimensions: "One size"
     },
     { 
         id: 43, 
@@ -394,7 +536,10 @@ const products = [
         price: 125.99, 
         stock: 9, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Full-grain leather with brass hardware" 
+        description: "Full-grain leather with brass hardware",
+        sku: "LSB-043",
+        weight: 1.5,
+        dimensions: "16x12x6 inches"
     },
     { 
         id: 44, 
@@ -403,7 +548,10 @@ const products = [
         price: 68.99, 
         stock: 13, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "UV protection with shatterproof lenses" 
+        description: "UV protection with shatterproof lenses",
+        sku: "PS-044",
+        weight: 0.08,
+        dimensions: "Medium frame"
     },
     { 
         id: 45, 
@@ -412,60 +560,176 @@ const products = [
         price: 55.99, 
         stock: 1, 
         image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Handcrafted Italian leather with brass buckle" 
+        description: "Handcrafted Italian leather with brass buckle",
+        sku: "ILB-045",
+        weight: 0.2,
+        dimensions: "Adjustable 28-34 inches"
     }
 ];
 
 // ===== GLOBAL STATE =====
 let cart = [];
 let currentFilter = 'all';
-let isLoading = false;
+let stripe = null;
 
-// ===== SHOPIFY INTEGRATION =====
-class ShopifyIntegration {
+// ===== STRIPE INTEGRATION =====
+class StripeIntegration {
     constructor() {
-        this.storeDomain = 'your-store.myshopify.com';
-        this.accessToken = 'your-storefront-access-token';
-        this.apiVersion = '2023-10';
+        this.publishableKey = CONFIG.stripe.publishableKey;
+        this.stripe = null;
+        this.elements = null;
     }
 
-    async getProducts() {
-        // Mock API call - replace with actual Shopify Storefront API
-        return new Promise((resolve) => {
-            setTimeout(() => resolve(products), 500);
+    async initialize() {
+        try {
+            // Load Stripe.js
+            if (!window.Stripe) {
+                await this.loadStripeJS();
+            }
+            
+            this.stripe = window.Stripe(this.publishableKey);
+            console.log('✅ Stripe initialized successfully');
+            return this.stripe;
+        } catch (error) {
+            console.error('❌ Failed to initialize Stripe:', error);
+            throw error;
+        }
+    }
+
+    async loadStripeJS() {
+        return new Promise((resolve, reject) => {
+            if (window.Stripe) {
+                resolve();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://js.stripe.com/v3/';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
         });
     }
 
-    async createCheckout(lineItems) {
-        console.log('Creating Shopify checkout with items:', lineItems);
-        
-        // Mock checkout - replace with actual Shopify checkout
-        const checkoutUrl = `https://${this.storeDomain}/cart/${lineItems.map(item => 
-            `${item.variantId}:${item.quantity}`
-        ).join(',')}`;
-        
-        window.open(checkoutUrl, '_blank');
-        return checkoutUrl;
+    async createCheckoutSession(items, customerInfo = {}) {
+        try {
+            const lineItems = items.map(item => {
+                const product = products.find(p => p.id === item.id);
+                return {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: product.name,
+                            description: product.description,
+                            images: [product.image],
+                            metadata: {
+                                product_id: product.id,
+                                sku: product.sku,
+                                category: product.category
+                            }
+                        },
+                        unit_amount: Math.round(product.price * 100) // Convert to cents
+                    },
+                    quantity: item.quantity
+                };
+            });
+
+            // Calculate totals
+            const subtotal = items.reduce((sum, item) => {
+                const product = products.find(p => p.id === item.id);
+                return sum + (product.price * item.quantity);
+            }, 0);
+
+            const shippingCost = this.calculateShipping(items);
+            const tax = this.calculateTax(subtotal);
+            const total = subtotal + shippingCost + tax;
+
+            // Send checkout data to webhook
+            const checkoutData = {
+                event_type: 'checkout_initiated',
+                timestamp: new Date().toISOString(),
+                customer: customerInfo,
+                items: items.map(item => {
+                    const product = products.find(p => p.id === item.id);
+                    return {
+                        product_id: product.id,
+                        name: product.name,
+                        sku: product.sku,
+                        price: product.price,
+                        quantity: item.quantity,
+                        total: product.price * item.quantity
+                    };
+                }),
+                totals: {
+                    subtotal,
+                    shipping: shippingCost,
+                    tax,
+                    total
+                }
+            };
+
+            await webhookManager.sendData(checkoutData);
+
+            // Redirect to Stripe Checkout
+            const { error } = await this.stripe.redirectToCheckout({
+                lineItems,
+                mode: 'payment',
+                successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancelUrl: `${window.location.origin}/cart`,
+                customerEmail: customerInfo.email,
+                shippingAddressCollection: {
+                    allowedCountries: ['US', 'CA']
+                },
+                metadata: {
+                    order_source: 'all_seasons_sprouts',
+                    customer_ip: await this.getClientIP()
+                }
+            });
+
+            if (error) {
+                throw error;
+            }
+
+        } catch (error) {
+            console.error('Stripe checkout error:', error);
+            throw error;
+        }
     }
 
-    async updateInventory(variantId, quantity) {
-        console.log(`Updating inventory for variant ${variantId}: ${quantity} units sold`);
-        // This would integrate with Shopify Admin API
-        return true;
+    calculateShipping(items) {
+        const totalWeight = items.reduce((sum, item) => {
+            const product = products.find(p => p.id === item.id);
+            return sum + (product.weight * item.quantity);
+        }, 0);
+
+        // Simple shipping calculation
+        if (totalWeight < 1) return 5.99;
+        if (totalWeight < 3) return 8.99;
+        if (totalWeight < 5) return 12.99;
+        return 15.99;
     }
 
-    setupWebhooks() {
-        console.log('Setting up Shopify webhooks for inventory management');
-        // This would set up actual webhooks in production
+    calculateTax(subtotal) {
+        // Simple tax calculation (8.5% - replace with actual tax service)
+        return subtotal * 0.085;
+    }
+
+    async getClientIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            return 'unknown';
+        }
     }
 }
 
 // ===== INVENTORY MANAGEMENT =====
 class InventoryManager {
     constructor() {
-        this.lowStockThreshold = 5;
-        this.ownerEmail = 'maezron54@gmail.com';
-        this.shopify = new ShopifyIntegration();
+        this.lowStockThreshold = CONFIG.inventory.lowStockThreshold;
+        this.ownerEmail = CONFIG.inventory.ownerEmail;
     }
 
     getStockStatus(product) {
@@ -486,40 +750,7 @@ class InventoryManager {
         return badges[status];
     }
 
-    async sendLowStockAlert(product) {
-        const alertData = {
-            to: this.ownerEmail,
-            subject: `Low Stock Alert: ${product.name}`,
-            body: `
-                Product: ${product.name}
-                Current Stock: ${product.stock}
-                Threshold: ${this.lowStockThreshold}
-                
-                Please restock this item soon.
-            `
-        };
-        
-        console.log('📧 Low Stock Alert Sent:', alertData);
-        // In production, this would send an actual email
-    }
-
-    async sendSoldOutAlert(product) {
-        const alertData = {
-            to: this.ownerEmail,
-            subject: `Sold Out Alert: ${product.name}`,
-            body: `
-                Product: ${product.name}
-                Status: SOLD OUT
-                
-                Consider restocking or enabling preorders.
-            `
-        };
-        
-        console.log('📧 Sold Out Alert Sent:', alertData);
-        // In production, this would send an actual email
-    }
-
-    async updateStock(productId, quantitySold) {
+    async updateStock(productId, quantitySold, reason = 'sale') {
         const product = products.find(p => p.id === productId);
         if (!product) return false;
 
@@ -530,17 +761,83 @@ class InventoryManager {
         // Update stock
         product.stock = Math.max(0, product.stock - quantitySold);
 
-        // Send alerts if needed
+        // Send inventory update to webhook
+        const inventoryData = {
+            event_type: 'inventory_updated',
+            timestamp: new Date().toISOString(),
+            product: {
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                category: product.category
+            },
+            inventory_change: {
+                previous_stock: previousStock,
+                new_stock: product.stock,
+                quantity_sold: quantitySold,
+                reason
+            },
+            alerts: {
+                is_low_stock: product.stock <= this.lowStockThreshold,
+                is_sold_out: product.stock === 0,
+                needs_alert: false
+            }
+        };
+
+        // Check if alerts are needed
         if (product.stock === 0 && wasInStock) {
+            inventoryData.alerts.needs_alert = true;
+            inventoryData.alerts.alert_type = 'sold_out';
             await this.sendSoldOutAlert(product);
         } else if (product.stock <= this.lowStockThreshold && !wasLowStock && product.stock > 0) {
+            inventoryData.alerts.needs_alert = true;
+            inventoryData.alerts.alert_type = 'low_stock';
             await this.sendLowStockAlert(product);
         }
 
-        // Update Shopify inventory
-        await this.shopify.updateInventory(product.id, product.stock);
+        await webhookManager.sendData(inventoryData);
 
+        console.log(`📦 Inventory updated: ${product.name} - ${product.stock} remaining`);
         return true;
+    }
+
+    async sendLowStockAlert(product) {
+        const alertData = {
+            event_type: 'low_stock_alert',
+            timestamp: new Date().toISOString(),
+            product: {
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                category: product.category,
+                current_stock: product.stock,
+                threshold: this.lowStockThreshold
+            },
+            recipient: this.ownerEmail,
+            priority: 'medium'
+        };
+
+        await webhookManager.sendData(alertData);
+        console.log('⚠️ Low stock alert sent for:', product.name);
+    }
+
+    async sendSoldOutAlert(product) {
+        const alertData = {
+            event_type: 'sold_out_alert',
+            timestamp: new Date().toISOString(),
+            product: {
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                category: product.category,
+                current_stock: product.stock
+            },
+            recipient: this.ownerEmail,
+            priority: 'high'
+        };
+
+        await webhookManager.sendData(alertData);
+        console.log('🚨 Sold out alert sent for:', product.name);
     }
 
     generateDailyReport() {
@@ -550,23 +847,112 @@ class InventoryManager {
         const soldOutItems = products.filter(p => p.stock === 0);
         
         const report = {
-            date: new Date().toLocaleDateString(),
-            totalProducts: products.length,
-            lowStockCount: lowStockItems.length,
-            soldOutCount: soldOutItems.length,
-            lowStockItems,
-            soldOutItems,
-            totalValue: products.reduce((sum, p) => sum + (p.price * p.stock), 0)
+            event_type: 'daily_inventory_report',
+            timestamp: new Date().toISOString(),
+            summary: {
+                date: new Date().toLocaleDateString(),
+                total_products: products.length,
+                low_stock_count: lowStockItems.length,
+                sold_out_count: soldOutItems.length,
+                total_inventory_value: products.reduce((sum, p) => sum + (p.price * p.stock), 0)
+            },
+            low_stock_items: lowStockItems.map(p => ({
+                id: p.id,
+                name: p.name,
+                sku: p.sku,
+                category: p.category,
+                current_stock: p.stock,
+                price: p.price,
+                value: p.price * p.stock
+            })),
+            sold_out_items: soldOutItems.map(p => ({
+                id: p.id,
+                name: p.name,
+                sku: p.sku,
+                category: p.category,
+                price: p.price
+            }))
         };
 
-        console.log('📊 Daily Inventory Report:', report);
+        webhookManager.sendData(report);
+        console.log('📊 Daily inventory report generated');
         return report;
     }
 }
 
+// ===== WEBHOOK MANAGER =====
+class WebhookManager {
+    constructor() {
+        this.webhookUrl = CONFIG.webhook.url;
+        this.retryAttempts = 3;
+        this.retryDelay = 1000; // 1 second
+    }
+
+    async sendData(data, attempt = 1) {
+        try {
+            const response = await fetch(this.webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'AllSeasonsSpouts/1.0'
+                },
+                body: JSON.stringify({
+                    ...data,
+                    webhook_metadata: {
+                        source: 'all_seasons_sprouts',
+                        version: '1.0',
+                        sent_at: new Date().toISOString(),
+                        attempt: attempt
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Webhook failed with status: ${response.status}`);
+            }
+
+            console.log(`✅ Webhook sent successfully: ${data.event_type}`);
+            return true;
+
+        } catch (error) {
+            console.error(`❌ Webhook failed (attempt ${attempt}):`, error);
+
+            if (attempt < this.retryAttempts) {
+                console.log(`🔄 Retrying webhook in ${this.retryDelay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+                return this.sendData(data, attempt + 1);
+            }
+
+            console.error('❌ Webhook failed after all retry attempts');
+            return false;
+        }
+    }
+
+    async sendOrderData(orderData) {
+        const data = {
+            event_type: 'order_completed',
+            timestamp: new Date().toISOString(),
+            order: orderData
+        };
+
+        return this.sendData(data);
+    }
+
+    async sendCustomerData(customerData) {
+        const data = {
+            event_type: 'customer_action',
+            timestamp: new Date().toISOString(),
+            customer: customerData
+        };
+
+        return this.sendData(data);
+    }
+}
+
 // ===== INITIALIZE MANAGERS =====
-const shopify = new ShopifyIntegration();
+const stripeIntegration = new StripeIntegration();
 const inventoryManager = new InventoryManager();
+const webhookManager = new WebhookManager();
 
 // ===== DOM ELEMENTS =====
 const loadingScreen = document.getElementById('loadingScreen');
@@ -591,6 +977,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     try {
+        // Initialize Stripe
+        await stripeIntegration.initialize();
+        
         // Setup event listeners
         setupEventListeners();
         
@@ -600,9 +989,6 @@ async function initializeApp() {
         // Load products
         await loadProducts();
         
-        // Setup Shopify webhooks
-        shopify.setupWebhooks();
-        
         // Hide loading screen
         setTimeout(() => {
             loadingScreen.classList.add('hidden');
@@ -611,10 +997,20 @@ async function initializeApp() {
         // Setup daily inventory reporting
         scheduleDailyReport();
         
+        // Send app initialization data
+        await webhookManager.sendData({
+            event_type: 'app_initialized',
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            screen_resolution: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        
         console.log('✅ App initialized successfully');
         
     } catch (error) {
         console.error('❌ App initialization failed:', error);
+        showNotification('Failed to initialize payment system', 'error');
     }
 }
 
@@ -676,8 +1072,7 @@ async function loadProducts() {
         // Simulate loading time for better UX
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        const loadedProducts = await shopify.getProducts();
-        renderProducts(loadedProducts);
+        renderProducts();
         
     } catch (error) {
         console.error('Failed to load products:', error);
@@ -805,7 +1200,12 @@ function handleFilterChange(e) {
     renderProducts();
     
     // Track filter usage
-    trackEvent('engagement', 'filter_used', newFilter);
+    webhookManager.sendData({
+        event_type: 'filter_used',
+        timestamp: new Date().toISOString(),
+        filter: newFilter,
+        products_shown: getFilteredProducts().length
+    });
 }
 
 // ===== CART FUNCTIONALITY =====
@@ -837,13 +1237,25 @@ async function addToCart(productId) {
             cart.push({ ...product, quantity: 1 });
         }
         
+        // Send add to cart event
+        await webhookManager.sendData({
+            event_type: 'item_added_to_cart',
+            timestamp: new Date().toISOString(),
+            product: {
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                price: product.price,
+                category: product.category
+            },
+            cart_total_items: cart.reduce((sum, item) => sum + item.quantity, 0),
+            cart_total_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        });
+        
         // Update UI
         updateCartCount();
         updateCartDisplay();
         showNotification(`${product.name} added to cart`);
-        
-        // Track event
-        trackEvent('ecommerce', 'add_to_cart', product.name);
         
         // Reset button after delay
         setTimeout(() => {
@@ -857,7 +1269,7 @@ async function addToCart(productId) {
         
     } catch (error) {
         console.error('Failed to add item to cart:', error);
-        showNotification('Failed to add item to cart');
+        showNotification('Failed to add item to cart', 'error');
         
         // Reset button
         button.style.background = '';
@@ -867,17 +1279,33 @@ async function addToCart(productId) {
 }
 
 function removeFromCart(productId) {
+    const removedItem = cart.find(item => item.id === productId);
     cart = cart.filter(item => item.id !== productId);
+    
     updateCartCount();
     updateCartDisplay();
     
-    trackEvent('ecommerce', 'remove_from_cart', productId);
+    // Send remove from cart event
+    if (removedItem) {
+        webhookManager.sendData({
+            event_type: 'item_removed_from_cart',
+            timestamp: new Date().toISOString(),
+            product: {
+                id: removedItem.id,
+                name: removedItem.name,
+                quantity_removed: removedItem.quantity
+            },
+            cart_total_items: cart.reduce((sum, item) => sum + item.quantity, 0),
+            cart_total_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        });
+    }
 }
 
 function updateQuantity(productId, change) {
     const item = cart.find(item => item.id === productId);
     if (!item) return;
     
+    const oldQuantity = item.quantity;
     const newQuantity = item.quantity + change;
     
     if (newQuantity <= 0) {
@@ -886,6 +1314,20 @@ function updateQuantity(productId, change) {
         item.quantity = newQuantity;
         updateCartCount();
         updateCartDisplay();
+        
+        // Send quantity update event
+        webhookManager.sendData({
+            event_type: 'cart_quantity_updated',
+            timestamp: new Date().toISOString(),
+            product: {
+                id: item.id,
+                name: item.name,
+                old_quantity: oldQuantity,
+                new_quantity: newQuantity
+            },
+            cart_total_items: cart.reduce((sum, item) => sum + item.quantity, 0),
+            cart_total_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        });
     }
 }
 
@@ -957,7 +1399,13 @@ function openCart() {
     cartOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
     
-    trackEvent('engagement', 'cart_opened');
+    // Track cart open event
+    webhookManager.sendData({
+        event_type: 'cart_opened',
+        timestamp: new Date().toISOString(),
+        cart_items: cart.length,
+        cart_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    });
 }
 
 function closeCart() {
@@ -973,30 +1421,28 @@ async function proceedToCheckout() {
         checkoutBtn.textContent = 'Processing...';
         checkoutBtn.disabled = true;
         
-        const lineItems = cart.map(item => ({
-            variantId: item.id,
-            quantity: item.quantity
-        }));
+        // Get customer IP for location data
+        const customerInfo = {
+            ip: await stripeIntegration.getClientIP(),
+            user_agent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+        };
         
-        await shopify.createCheckout(lineItems);
-        
-        // Track checkout
-        trackEvent('ecommerce', 'begin_checkout', {
-            value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            items: cart.length
-        });
-        
-        // Clear cart
-        cart = [];
-        updateCartCount();
-        updateCartDisplay();
-        closeCart();
-        
-        showNotification('Redirecting to checkout...');
+        // Create Stripe checkout session
+        await stripeIntegration.createCheckoutSession(cart, customerInfo);
         
     } catch (error) {
         console.error('Checkout failed:', error);
-        showNotification('Checkout failed. Please try again.');
+        showNotification('Checkout failed. Please try again.', 'error');
+        
+        // Send error to webhook
+        webhookManager.sendData({
+            event_type: 'checkout_error',
+            timestamp: new Date().toISOString(),
+            error: error.message,
+            cart_items: cart.length,
+            cart_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        });
     } finally {
         checkoutBtn.textContent = 'Proceed to Checkout';
         checkoutBtn.disabled = cart.length === 0;
@@ -1027,7 +1473,7 @@ function toggleMobileMenu() {
 }
 
 function scheduleDailyReport() {
-    // Schedule daily inventory report (in production, this would be handled server-side)
+    // Schedule daily inventory report
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1044,20 +1490,6 @@ function scheduleDailyReport() {
     }, msUntilTomorrow);
 }
 
-// ===== ANALYTICS =====
-function trackEvent(category, action, label = null) {
-    // Google Analytics tracking
-    if (typeof gtag !== 'undefined') {
-        gtag('event', action, {
-            event_category: category,
-            event_label: label
-        });
-    }
-    
-    // Console logging for development
-    console.log(`📊 Event tracked: ${category} > ${action}`, label);
-}
-
 // ===== PERFORMANCE MONITORING =====
 function measurePerformance() {
     if ('performance' in window) {
@@ -1065,27 +1497,17 @@ function measurePerformance() {
             const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
             console.log(`⚡ Page load time: ${loadTime}ms`);
             
-            if (loadTime > 3000) {
-                console.warn('⚠️ Page load time exceeds 3 seconds. Consider optimization.');
-            }
-            
-            // Track performance
-            trackEvent('performance', 'page_load', loadTime);
-        });
-    }
-}
-
-// ===== SERVICE WORKER (PWA) =====
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('✅ SW registered: ', registration);
-                })
-                .catch(registrationError => {
-                    console.log('❌ SW registration failed: ', registrationError);
-                });
+            // Send performance data to webhook
+            webhookManager.sendData({
+                event_type: 'performance_metrics',
+                timestamp: new Date().toISOString(),
+                metrics: {
+                    page_load_time: loadTime,
+                    user_agent: navigator.userAgent,
+                    screen_resolution: `${screen.width}x${screen.height}`,
+                    connection_type: navigator.connection?.effectiveType || 'unknown'
+                }
+            });
         });
     }
 }
@@ -1093,12 +1515,31 @@ function registerServiceWorker() {
 // ===== ERROR HANDLING =====
 window.addEventListener('error', (e) => {
     console.error('❌ Global error:', e.error);
-    trackEvent('error', 'javascript_error', e.message);
+    
+    webhookManager.sendData({
+        event_type: 'javascript_error',
+        timestamp: new Date().toISOString(),
+        error: {
+            message: e.message,
+            filename: e.filename,
+            line: e.lineno,
+            column: e.colno,
+            stack: e.error?.stack
+        }
+    });
 });
 
 window.addEventListener('unhandledrejection', (e) => {
     console.error('❌ Unhandled promise rejection:', e.reason);
-    trackEvent('error', 'promise_rejection', e.reason);
+    
+    webhookManager.sendData({
+        event_type: 'promise_rejection',
+        timestamp: new Date().toISOString(),
+        error: {
+            reason: e.reason,
+            stack: e.reason?.stack
+        }
+    });
 });
 
 // ===== INITIALIZE PERFORMANCE MONITORING =====
