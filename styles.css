@@ -1093,3 +1093,771 @@ a:focus {
         --color-border: #666666;
     }
 }
+.product-sku {
+    font-size: 0.7rem;
+    color: var(--color-quaternary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+}
+
+/* ===== PROFILE UI STYLES ===== */
+
+/* Profile Modal Base */
+.profile-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.profile-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.profile-modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.profile-modal.show .profile-modal-content {
+    transform: translateY(0);
+}
+
+.profile-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-modal-header h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--color-primary);
+}
+
+.profile-modal-close {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--color-quaternary);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.profile-modal-close:hover {
+    background: #f5f5f5;
+    color: var(--color-primary);
+}
+
+.profile-modal-body {
+    padding: 24px;
+}
+
+.profile-modal-footer {
+    padding: 24px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+/* Guest Profile Content */
+.profile-guest-content {
+    text-align: center;
+}
+
+.profile-guest-info {
+    margin-bottom: 32px;
+}
+
+.profile-guest-icon {
+    margin: 0 auto 16px;
+    color: var(--color-quaternary);
+}
+
+.profile-guest-info h3 {
+    margin-bottom: 8px;
+    color: var(--color-primary);
+}
+
+.profile-guest-info p {
+    color: var(--color-tertiary);
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+/* Profile Stats Grid */
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.profile-stat {
+    text-align: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.profile-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+
+.profile-stat-label {
+    font-size: 0.85rem;
+    color: var(--color-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Save Reminder */
+.profile-save-reminder {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+    text-align: left;
+}
+
+.profile-save-icon {
+    font-size: 2rem;
+}
+
+.profile-save-reminder h4 {
+    margin: 0 0 4px 0;
+    color: #92400e;
+}
+
+.profile-save-reminder p {
+    margin: 0;
+    color: #b45309;
+    font-size: 0.9rem;
+}
+
+/* Registered Profile Content */
+.profile-registered-content {
+    text-align: left;
+}
+
+.profile-header-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.profile-avatar {
+    width: 60px;
+    height: 60px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.profile-user-info h3 {
+    margin: 0 0 4px 0;
+    color: var(--color-primary);
+}
+
+.profile-user-info p {
+    margin: 0 0 4px 0;
+    color: var(--color-tertiary);
+}
+
+.profile-user-info small {
+    color: var(--color-quaternary);
+    font-size: 0.8rem;
+}
+
+/* Profile Sections */
+.profile-sections {
+    display: grid;
+    gap: 24px;
+    margin: 24px 0;
+}
+
+.profile-section h4 {
+    margin: 0 0 16px 0;
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.profile-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-info-item:last-child {
+    border-bottom: none;
+}
+
+.profile-info-item label {
+    font-weight: 500;
+    color: var(--color-tertiary);
+}
+
+.profile-info-item span {
+    color: var(--color-primary);
+}
+
+/* Activity Section */
+.profile-activity {
+    margin-top: 24px;
+}
+
+.profile-activity h4 {
+    margin: 0 0 16px 0;
+    color: var(--color-primary);
+}
+
+.profile-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.profile-activity-icon {
+    font-size: 1.2rem;
+}
+
+.profile-activity-details {
+    flex: 1;
+}
+
+.profile-activity-action {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    margin-bottom: 2px;
+}
+
+.profile-activity-time {
+    font-size: 0.8rem;
+    color: var(--color-quaternary);
+}
+
+.profile-no-activity {
+    text-align: center;
+    color: var(--color-quaternary);
+    font-style: italic;
+    padding: 24px;
+}
+
+/* Profile Actions */
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.profile-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.profile-btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.profile-btn-primary:hover {
+    background: var(--color-secondary);
+    transform: translateY(-1px);
+}
+
+.profile-btn-secondary {
+    background: #f0f0f0;
+    color: var(--color-primary);
+}
+
+.profile-btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.profile-btn-tertiary {
+    background: transparent;
+    color: var(--color-tertiary);
+    border: 1px solid #e0e0e0;
+}
+
+.profile-btn-tertiary:hover {
+    background: #f5f5f5;
+}
+
+/* Signup Prompt Modal */
+.signup-prompt-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.signup-prompt-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.signup-prompt-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.signup-prompt-modal.show .signup-prompt-content {
+    transform: scale(1);
+}
+
+.signup-prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.signup-prompt-header h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--color-primary);
+}
+
+.signup-prompt-close {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--color-quaternary);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.signup-prompt-close:hover {
+    background: #f5f5f5;
+    color: var(--color-primary);
+}
+
+.signup-prompt-body {
+    padding: 24px;
+}
+
+/* Benefits Section */
+.signup-prompt-benefits {
+    margin-bottom: 32px;
+}
+
+.signup-benefit {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.benefit-icon {
+    font-size: 2rem;
+    width: 50px;
+    text-align: center;
+}
+
+.signup-benefit h4 {
+    margin: 0 0 4px 0;
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.signup-benefit p {
+    margin: 0;
+    color: var(--color-tertiary);
+    font-size: 0.9rem;
+}
+
+/* Form Styles */
+.signup-form,
+.edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-section {
+    margin-bottom: 24px;
+}
+
+.form-section h4 {
+    margin: 0 0 16px 0;
+    color: var(--color-primary);
+    font-size: 1rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e0e0e0;
+    border-radius: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.signup-submit-btn {
+    background: var(--color-primary);
+    color: white;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.signup-submit-btn:hover:not(:disabled) {
+    background: var(--color-secondary);
+    transform: translateY(-1px);
+}
+
+.signup-submit-btn:disabled {
+    background: var(--color-quaternary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+/* Guest Indicator */
+.guest-indicator {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #f59e0b;
+    border-radius: 50%;
+    border: 2px solid white;
+    animation: pulse-indicator 2s infinite;
+}
+
+@keyframes pulse-indicator {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-modal-content,
+    .signup-prompt-content {
+        width: 95%;
+        max-height: 95vh;
+        margin: 20px;
+    }
+    
+    .profile-modal-header,
+    .profile-modal-body,
+    .profile-modal-footer,
+    .signup-prompt-header,
+    .signup-prompt-body {
+        padding: 20px;
+    }
+    
+    .profile-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+    }
+    
+    .profile-btn {
+        min-width: auto;
+    }
+    
+    .signup-benefit {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .benefit-icon {
+        width: auto;
+    }
+    
+    .profile-header-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .profile-save-reminder {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-modal-header h2,
+    .signup-prompt-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .profile-stat-value {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animation for modal entrance */
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.profile-modal.show .profile-modal-content,
+.signup-prompt-modal.show .signup-prompt-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+/* Loading states */
+.profile-btn:disabled,
+.signup-submit-btn:disabled {
+    position: relative;
+    color: transparent;
+}
+
+.profile-btn:disabled::after,
+.signup-submit-btn:disabled::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    color: white;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Success/Error message styling integration */
+.profile-message {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    left: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 2000;
+    transform: translateY(-100px);
+    transition: transform 0.3s ease;
+    font-weight: 500;
+}
+
+.profile-message.show {
+    transform: translateY(0);
+}
+
+.profile-message.success {
+    background: #10b981;
+    color: white;
+}
+
+.profile-message.error {
+    background: #ef4444;
+    color: white;
+}
+
+/* Accessibility improvements */
+.profile-modal:focus,
+.signup-prompt-modal:focus {
+    outline: none;
+}
+
+.profile-modal-content:focus,
+.signup-prompt-content:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .profile-modal-content,
+    .signup-prompt-content {
+        border: 2px solid var(--color-primary);
+    }
+    
+    .profile-btn,
+    .signup-submit-btn {
+        border: 1px solid currentColor;
+    }
+}

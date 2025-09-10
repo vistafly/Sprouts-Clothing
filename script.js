@@ -1,598 +1,138 @@
-// ===== STRIPE & INVENTORY MANAGEMENT SYSTEM =====
+// ===== MAIN APPLICATION SCRIPT WITH PROFILE INTEGRATION =====
+// Dependencies: firebase-config.js, firebase-manager.js, and profile-managers.js must be loaded first
 
-// ===== CONFIGURATION =====
-const CONFIG = {
-    stripe: {
-        publishableKey: 'pk_test_51S5YU8FKyDLT77ug2RZh3OVCAzDsHVPZIvyBWxjuTcylKHLcza1XhFTjEzpWbdgilo5fpTl16ivKardNXM23c6AI00eknKjdiV'
-    },
-    webhook: {
-        url: 'https://hook.us2.make.com/lowxqmqavxlrkc9c82pf4h8c8a58ax88'
-    },
-    inventory: {
-        lowStockThreshold: 5,
-        ownerEmail: 'maezron54@gmail.com'
-    }
+// ===== STRIPE CONFIGURATION =====
+const STRIPE_CONFIG = {
+    publishableKey: 'pk_test_51S5YU8FKyDLT77ug2RZh3OVCAzDsHVPZIvyBWxjuTcylKHLcza1XhFTjEzpWbdgilo5fpTl16ivKardNXM23c6AI00eknKjdiV'
 };
-
-// ===== PRODUCT DATABASE =====
-const products = [
-    // Boys Clothing (15 items)
-    { 
-        id: 1, 
-        name: "Heritage Denim Jacket", 
-        category: "boys", 
-        price: 89.99, 
-        stock: 12, 
-        image: "https://images.unsplash.com/photo-1516962126636-27ad087061cc?w=600&h=800&fit=crop&auto=format", 
-        description: "Premium heritage denim with vintage wash",
-        sku: "HDJ-001",
-        weight: 0.8,
-        dimensions: "Medium fit"
-    },
-    { 
-        id: 2, 
-        name: "Organic Cotton Polo", 
-        category: "boys", 
-        price: 45.99, 
-        stock: 8, 
-        image: "https://images.unsplash.com/photo-1503944168849-ce5ccdaeb477?w=600&h=800&fit=crop&auto=format", 
-        description: "Sustainably sourced organic cotton polo",
-        sku: "OCP-002",
-        weight: 0.3,
-        dimensions: "Regular fit"
-    },
-    { 
-        id: 3, 
-        name: "Performance Joggers", 
-        category: "boys", 
-        price: 65.99, 
-        stock: 15, 
-        image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Technical fabric with moisture-wicking properties",
-        sku: "PJ-003",
-        weight: 0.4,
-        dimensions: "Athletic fit"
-    },
-    { 
-        id: 4, 
-        name: "Artist Series Tee", 
-        category: "boys", 
-        price: 38.99, 
-        stock: 3, 
-        image: "https://images.unsplash.com/photo-1576253566935-e4e1789ad4ac?w=600&h=800&fit=crop&auto=format", 
-        description: "Limited edition artist collaboration",
-        sku: "AST-004",
-        weight: 0.2,
-        dimensions: "Regular fit"
-    },
-    { 
-        id: 5, 
-        name: "Tailored Chino Shorts", 
-        category: "boys", 
-        price: 52.99, 
-        stock: 0, 
-        image: "https://images.unsplash.com/photo-1506629905607-bb4d88e96b2c?w=600&h=800&fit=crop&auto=format", 
-        description: "Precisely tailored summer essential", 
-        preorder: true,
-        sku: "TCS-005",
-        weight: 0.3,
-        dimensions: "Tailored fit"
-    },
-    { 
-        id: 6, 
-        name: "Merino Wool Hoodie", 
-        category: "boys", 
-        price: 98.99, 
-        stock: 20, 
-        image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Ultra-soft merino wool blend",
-        sku: "MWH-006",
-        weight: 0.6,
-        dimensions: "Relaxed fit"
-    },
-    { 
-        id: 7, 
-        name: "Oxford Button-Down", 
-        category: "boys", 
-        price: 68.99, 
-        stock: 6, 
-        image: "https://images.unsplash.com/photo-1503944168849-ce5ccdaeb477?w=600&h=800&fit=crop&auto=format", 
-        description: "Classic Oxford weave in premium cotton",
-        sku: "OBD-007",
-        weight: 0.4,
-        dimensions: "Classic fit"
-    },
-    { 
-        id: 8, 
-        name: "Adventure Cargo Pants", 
-        category: "boys", 
-        price: 75.99, 
-        stock: 11, 
-        image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Durable ripstop fabric with functional pockets",
-        sku: "ACP-008",
-        weight: 0.5,
-        dimensions: "Relaxed fit"
-    },
-    { 
-        id: 9, 
-        name: "Wool Baseball Cap", 
-        category: "boys", 
-        price: 42.99, 
-        stock: 25, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Premium wool blend with leather strap",
-        sku: "WBC-009",
-        weight: 0.1,
-        dimensions: "Adjustable"
-    },
-    { 
-        id: 10, 
-        name: "Italian Leather Sneakers", 
-        category: "boys", 
-        price: 124.99, 
-        stock: 4, 
-        image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&h=800&fit=crop&auto=format", 
-        description: "Handcrafted Italian leather construction",
-        sku: "ILS-010",
-        weight: 0.7,
-        dimensions: "True to size"
-    },
-    { 
-        id: 11, 
-        name: "Technical Track Suit", 
-        category: "boys", 
-        price: 89.99, 
-        stock: 9, 
-        image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=800&fit=crop&auto=format", 
-        description: "Performance fabric with moisture management",
-        sku: "TTS-011",
-        weight: 0.9,
-        dimensions: "Athletic fit"
-    },
-    { 
-        id: 12, 
-        name: "Down Puffer Jacket", 
-        category: "boys", 
-        price: 145.99, 
-        stock: 7, 
-        image: "https://images.unsplash.com/photo-1516962126636-27ad087061cc?w=600&h=800&fit=crop&auto=format", 
-        description: "Responsibly sourced down insulation",
-        sku: "DPJ-012",
-        weight: 1.2,
-        dimensions: "Regular fit"
-    },
-    { 
-        id: 13, 
-        name: "Chambray School Shirt", 
-        category: "boys", 
-        price: 48.99, 
-        stock: 18, 
-        image: "https://images.unsplash.com/photo-1503944168849-ce5ccdaeb477?w=600&h=800&fit=crop&auto=format", 
-        description: "Elevated chambray with mother-of-pearl buttons",
-        sku: "CSS-013",
-        weight: 0.3,
-        dimensions: "School fit"
-    },
-    { 
-        id: 14, 
-        name: "Quick-Dry Swim Shorts", 
-        category: "boys", 
-        price: 39.99, 
-        stock: 14, 
-        image: "https://images.unsplash.com/photo-1506629905607-bb4d88e96b2c?w=600&h=800&fit=crop&auto=format", 
-        description: "Technical swim fabric with UPF protection",
-        sku: "QDS-014",
-        weight: 0.2,
-        dimensions: "Swim fit"
-    },
-    { 
-        id: 15, 
-        name: "Silk Bow Tie", 
-        category: "boys", 
-        price: 35.99, 
-        stock: 2, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Hand-tied silk in classic patterns",
-        sku: "SBT-015",
-        weight: 0.05,
-        dimensions: "Adjustable"
-    },
-
-    // Girls Clothing (15 items)
-    { 
-        id: 16, 
-        name: "Liberty Print Dress", 
-        category: "girls", 
-        price: 95.99, 
-        stock: 10, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Authentic Liberty of London print",
-        sku: "LPD-016",
-        weight: 0.4,
-        dimensions: "A-line fit"
-    },
-    { 
-        id: 17, 
-        name: "Vintage Denim Overall", 
-        category: "girls", 
-        price: 78.99, 
-        stock: 5, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Heritage denim with vintage-inspired details",
-        sku: "VDO-017",
-        weight: 0.6,
-        dimensions: "Relaxed fit"
-    },
-    { 
-        id: 18, 
-        name: "Tulle Party Skirt", 
-        category: "girls", 
-        price: 58.99, 
-        stock: 8, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Multi-layer tulle with silk lining",
-        sku: "TPS-018",
-        weight: 0.3,
-        dimensions: "Flare fit"
-    },
-    { 
-        id: 19, 
-        name: "Cashmere Cardigan", 
-        category: "girls", 
-        price: 125.99, 
-        stock: 12, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Pure cashmere in seasonal colors",
-        sku: "CC-019",
-        weight: 0.4,
-        dimensions: "Regular fit"
-    },
-    { 
-        id: 20, 
-        name: "Organic Cotton Leggings", 
-        category: "girls", 
-        price: 35.99, 
-        stock: 0, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Certified organic cotton with stretch",
-        sku: "OCL-020",
-        weight: 0.2,
-        dimensions: "Stretch fit"
-    },
-    { 
-        id: 21, 
-        name: "Silk Party Dress", 
-        category: "girls", 
-        price: 165.99, 
-        stock: 6, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Pure silk with hand-embroidered details",
-        sku: "SPD-021",
-        weight: 0.5,
-        dimensions: "Princess fit"
-    },
-    { 
-        id: 22, 
-        name: "School Pinafore", 
-        category: "girls", 
-        price: 72.99, 
-        stock: 16, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Tailored pinafore in premium navy wool",
-        sku: "SP-022",
-        weight: 0.5,
-        dimensions: "School fit"
-    },
-    { 
-        id: 23, 
-        name: "Bamboo Pajama Set", 
-        category: "girls", 
-        price: 68.99, 
-        stock: 11, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Bamboo fiber with temperature regulation",
-        sku: "BPS-023",
-        weight: 0.4,
-        dimensions: "Comfortable fit"
-    },
-    { 
-        id: 24, 
-        name: "Leather Ballet Flats", 
-        category: "girls", 
-        price: 89.99, 
-        stock: 3, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Italian leather with cushioned sole",
-        sku: "LBF-024",
-        weight: 0.4,
-        dimensions: "True to size"
-    },
-    { 
-        id: 25, 
-        name: "Silk Hair Accessories", 
-        category: "girls", 
-        price: 28.99, 
-        stock: 22, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Pure silk scrunchies and headbands",
-        sku: "SHA-025",
-        weight: 0.05,
-        dimensions: "One size"
-    },
-    { 
-        id: 26, 
-        name: "Wool Blend Coat", 
-        category: "girls", 
-        price: 185.99, 
-        stock: 4, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Luxurious wool blend with satin lining",
-        sku: "WBC-026",
-        weight: 1.0,
-        dimensions: "Regular fit"
-    },
-    { 
-        id: 27, 
-        name: "Performance Shorts", 
-        category: "girls", 
-        price: 44.99, 
-        stock: 13, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Technical fabric for active wear",
-        sku: "PS-027",
-        weight: 0.2,
-        dimensions: "Athletic fit"
-    },
-    { 
-        id: 28, 
-        name: "Linen Sundress", 
-        category: "girls", 
-        price: 85.99, 
-        stock: 9, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "French linen with delicate embroidery",
-        sku: "LS-028",
-        weight: 0.3,
-        dimensions: "Flowy fit"
-    },
-    { 
-        id: 29, 
-        name: "Pleated School Skirt", 
-        category: "girls", 
-        price: 65.99, 
-        stock: 1, 
-        image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&auto=format", 
-        description: "Precisely pleated wool blend",
-        sku: "PSS-029",
-        weight: 0.4,
-        dimensions: "School fit"
-    },
-    { 
-        id: 30, 
-        name: "Raincoat with Hood", 
-        category: "girls", 
-        price: 92.99, 
-        stock: 7, 
-        image: "https://images.unsplash.com/photo-1518622358385-8ea7d0794bf6?w=600&h=800&fit=crop&auto=format", 
-        description: "Waterproof fabric with breathable lining",
-        sku: "RH-030",
-        weight: 0.6,
-        dimensions: "Regular fit"
-    },
-
-    // Women's Jewelry (10 items)
-    { 
-        id: 31, 
-        name: "Tahitian Pearl Necklace", 
-        category: "women", 
-        price: 285.99, 
-        stock: 5, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Lustrous Tahitian pearls with 18k clasp",
-        sku: "TPN-031",
-        weight: 0.1,
-        dimensions: "18 inch length"
-    },
-    { 
-        id: 32, 
-        name: "Diamond Stud Earrings", 
-        category: "women", 
-        price: 445.99, 
-        stock: 3, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "0.25ct diamonds in 14k white gold",
-        sku: "DSE-032",
-        weight: 0.02,
-        dimensions: "6mm diameter"
-    },
-    { 
-        id: 33, 
-        name: "Vintage Gold Bracelet", 
-        category: "women", 
-        price: 195.99, 
-        stock: 8, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "18k gold with vintage-inspired design",
-        sku: "VGB-033",
-        weight: 0.08,
-        dimensions: "7.5 inch length"
-    },
-    { 
-        id: 34, 
-        name: "Sterling Silver Ring Set", 
-        category: "women", 
-        price: 125.99, 
-        stock: 12, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Handcrafted sterling silver collection",
-        sku: "SSRS-034",
-        weight: 0.05,
-        dimensions: "Sizes 6-8"
-    },
-    { 
-        id: 35, 
-        name: "Sapphire Pendant", 
-        category: "women", 
-        price: 325.99, 
-        stock: 0, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Natural sapphire in 14k setting", 
-        preorder: true,
-        sku: "SP-035",
-        weight: 0.03,
-        dimensions: "16 inch chain"
-    },
-    { 
-        id: 36, 
-        name: "Gold Hoop Earrings", 
-        category: "women", 
-        price: 165.99, 
-        stock: 15, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "14k gold hoops in three sizes",
-        sku: "GHE-036",
-        weight: 0.04,
-        dimensions: "30mm diameter"
-    },
-    { 
-        id: 37, 
-        name: "Charm Bracelet", 
-        category: "women", 
-        price: 235.99, 
-        stock: 6, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Sterling silver with removable charms",
-        sku: "CB-037",
-        weight: 0.1,
-        dimensions: "8 inch length"
-    },
-    { 
-        id: 38, 
-        name: "Statement Collar Necklace", 
-        category: "women", 
-        price: 385.99, 
-        stock: 4, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Bold design in mixed metals",
-        sku: "SCN-038",
-        weight: 0.15,
-        dimensions: "16 inch collar"
-    },
-    { 
-        id: 39, 
-        name: "Diamond Tennis Bracelet", 
-        category: "women", 
-        price: 685.99, 
-        stock: 2, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "1ct total weight in 14k white gold",
-        sku: "DTB-039",
-        weight: 0.12,
-        dimensions: "7 inch length"
-    },
-    { 
-        id: 40, 
-        name: "Emerald Cocktail Ring", 
-        category: "women", 
-        price: 425.99, 
-        stock: 7, 
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=800&fit=crop&auto=format", 
-        description: "Natural emerald with diamond accents",
-        sku: "ECR-040",
-        weight: 0.06,
-        dimensions: "Size 7"
-    },
-
-    // Accessories (5 items)
-    { 
-        id: 41, 
-        name: "Wide-Brim Sun Hat", 
-        category: "accessories", 
-        price: 58.99, 
-        stock: 18, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "UPF 50+ protection with chin strap",
-        sku: "WBSH-041",
-        weight: 0.3,
-        dimensions: "One size fits most"
-    },
-    { 
-        id: 42, 
-        name: "Merino Wool Beanie", 
-        category: "accessories", 
-        price: 45.99, 
-        stock: 4, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Ultra-soft merino wool in seasonal colors",
-        sku: "MWB-042",
-        weight: 0.1,
-        dimensions: "One size"
-    },
-    { 
-        id: 43, 
-        name: "Leather School Backpack", 
-        category: "accessories", 
-        price: 125.99, 
-        stock: 9, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Full-grain leather with brass hardware",
-        sku: "LSB-043",
-        weight: 1.5,
-        dimensions: "16x12x6 inches"
-    },
-    { 
-        id: 44, 
-        name: "Polarized Sunglasses", 
-        category: "accessories", 
-        price: 68.99, 
-        stock: 13, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "UV protection with shatterproof lenses",
-        sku: "PS-044",
-        weight: 0.08,
-        dimensions: "Medium frame"
-    },
-    { 
-        id: 45, 
-        name: "Italian Leather Belt", 
-        category: "accessories", 
-        price: 55.99, 
-        stock: 1, 
-        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=800&fit=crop&auto=format", 
-        description: "Handcrafted Italian leather with brass buckle",
-        sku: "ILB-045",
-        weight: 0.2,
-        dimensions: "Adjustable 28-34 inches"
-    }
-];
 
 // ===== GLOBAL STATE =====
 let cart = [];
 let currentFilter = 'all';
 let stripe = null;
+let firebaseManager = null;
+let profileUI = null;
+let products = []; // This will be populated from Firebase
+
+// ===== PROFILE-AWARE CART MANAGEMENT =====
+class ProfileAwareCartManager {
+    constructor(firebaseManager) {
+        this.firebaseManager = firebaseManager;
+        this.localCart = [];
+    }
+
+    async initialize() {
+        await this.syncWithProfile();
+    }
+
+    async syncWithProfile() {
+        if (!this.firebaseManager || !this.firebaseManager.currentProfile) return;
+        
+        const profileCart = this.firebaseManager.currentProfile.shopping.cart.items;
+        
+        this.localCart = profileCart.map(item => {
+            const product = products.find(p => p.id === item.product_id);
+            if (!product) return null;
+            
+            return {
+                ...product,
+                quantity: item.quantity
+            };
+        }).filter(Boolean);
+        
+        cart = this.localCart;
+    }
+
+    async addToCart(productId, quantity = 1) {
+        if (this.firebaseManager) {
+            await this.firebaseManager.addToCart(productId, quantity);
+        }
+        
+        const product = products.find(p => p.id === productId);
+        if (!product) return false;
+
+        const existingItem = this.localCart.find(item => item.id === productId);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            this.localCart.push({ ...product, quantity });
+        }
+        
+        cart = this.localCart;
+        return true;
+    }
+
+    async removeFromCart(productId) {
+        if (this.firebaseManager) {
+            await this.firebaseManager.removeFromCart(productId);
+        }
+        
+        this.localCart = this.localCart.filter(item => item.id !== productId);
+        cart = this.localCart;
+    }
+
+    async updateQuantity(productId, quantity) {
+        if (this.firebaseManager) {
+            await this.firebaseManager.updateCartQuantity(productId, quantity);
+        }
+        
+        const item = this.localCart.find(item => item.id === productId);
+        if (item) {
+            if (quantity <= 0) {
+                await this.removeFromCart(productId);
+            } else {
+                item.quantity = quantity;
+                cart = this.localCart;
+            }
+        }
+    }
+
+    async clearCart() {
+        if (this.firebaseManager) {
+            await this.firebaseManager.clearCart();
+        }
+        
+        this.localCart = [];
+        cart = [];
+    }
+
+    getCart() {
+        return this.localCart;
+    }
+
+    getCartCount() {
+        return this.localCart.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    getCartTotal() {
+        return this.localCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+}
 
 // ===== STRIPE INTEGRATION =====
 class StripeIntegration {
     constructor() {
-        this.publishableKey = CONFIG.stripe.publishableKey;
+        this.publishableKey = STRIPE_CONFIG.publishableKey;
         this.stripe = null;
         this.elements = null;
+        this.isLocalDevelopment = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     }
 
     async initialize() {
         try {
-            // Load Stripe.js
             if (!window.Stripe) {
                 await this.loadStripeJS();
             }
             
             this.stripe = window.Stripe(this.publishableKey);
-            console.log('✅ Stripe initialized successfully');
+            console.log('Stripe initialized successfully');
             return this.stripe;
         } catch (error) {
-            console.error('❌ Failed to initialize Stripe:', error);
-            throw error;
+            console.error('Failed to initialize Stripe:', error);
+            if (this.isLocalDevelopment) {
+                console.log('Running locally - some Stripe features may be limited');
+            }
+            return null;
         }
     }
 
@@ -606,71 +146,64 @@ class StripeIntegration {
             const script = document.createElement('script');
             script.src = 'https://js.stripe.com/v3/';
             script.onload = resolve;
-            script.onerror = reject;
+            script.onerror = (error) => {
+                if (this.isLocalDevelopment) {
+                    console.log('Stripe.js failed to load - this is expected when running locally');
+                    resolve();
+                } else {
+                    reject(error);
+                }
+            };
             document.head.appendChild(script);
         });
     }
 
     async createCheckoutSession(items, customerInfo = {}) {
-        try {
-            const lineItems = items.map(item => {
-                const product = products.find(p => p.id === item.id);
-                return {
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: product.name,
-                            description: product.description,
-                            images: [product.image],
-                            metadata: {
-                                product_id: product.id,
-                                sku: product.sku,
-                                category: product.category
-                            }
-                        },
-                        unit_amount: Math.round(product.price * 100) // Convert to cents
-                    },
-                    quantity: item.quantity
-                };
-            });
-
-            // Calculate totals
-            const subtotal = items.reduce((sum, item) => {
-                const product = products.find(p => p.id === item.id);
-                return sum + (product.price * item.quantity);
-            }, 0);
-
-            const shippingCost = this.calculateShipping(items);
-            const tax = this.calculateTax(subtotal);
-            const total = subtotal + shippingCost + tax;
-
-            // Send checkout data to webhook
-            const checkoutData = {
-                event_type: 'checkout_initiated',
-                timestamp: new Date().toISOString(),
-                customer: customerInfo,
-                items: items.map(item => {
-                    const product = products.find(p => p.id === item.id);
-                    return {
-                        product_id: product.id,
-                        name: product.name,
-                        sku: product.sku,
-                        price: product.price,
-                        quantity: item.quantity,
-                        total: product.price * item.quantity
-                    };
-                }),
-                totals: {
-                    subtotal,
-                    shipping: shippingCost,
-                    tax,
-                    total
+        if (this.isLocalDevelopment) {
+            console.log('Local development mode - simulating Stripe checkout');
+            console.log('Items to checkout:', items);
+            
+            await this.logCheckoutToFirebase(items, customerInfo);
+            
+            showNotification('Local development mode - checkout simulated');
+            
+            setTimeout(async () => {
+                if (window.cartManager) {
+                    await window.cartManager.clearCart();
+                    updateCartCount();
+                    updateCartDisplay();
+                    closeCart();
                 }
-            };
+            }, 2000);
+            
+            return;
+        }
 
-            await webhookManager.sendData(checkoutData);
+        if (!this.stripe) {
+            throw new Error('Stripe not initialized');
+        }
 
-            // Redirect to Stripe Checkout
+        try {
+            await this.logCheckoutToFirebase(items, customerInfo);
+
+            const lineItems = items.map(item => ({
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: item.name,
+                        description: item.description,
+                        images: [item.image],
+                        metadata: {
+                            product_id: item.id,
+                            sku: item.sku,
+                            category: item.category
+                        }
+                    },
+                    unit_amount: Math.round(item.price * 100)
+                },
+                quantity: item.quantity
+            }));
+
             const { error } = await this.stripe.redirectToCheckout({
                 lineItems,
                 mode: 'payment',
@@ -682,7 +215,8 @@ class StripeIntegration {
                 },
                 metadata: {
                     order_source: 'all_seasons_sprouts',
-                    customer_ip: await this.getClientIP()
+                    customer_ip: await this.getClientIP(),
+                    profile_id: firebaseManager?.currentProfile?.id
                 }
             });
 
@@ -692,17 +226,48 @@ class StripeIntegration {
 
         } catch (error) {
             console.error('Stripe checkout error:', error);
+            await firebaseManager.logEvent('checkout_error', {
+                error: error.message,
+                cart_items: items.length,
+                cart_value: items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+            });
             throw error;
         }
     }
 
-    calculateShipping(items) {
-        const totalWeight = items.reduce((sum, item) => {
-            const product = products.find(p => p.id === item.id);
-            return sum + (product.weight * item.quantity);
-        }, 0);
+    async logCheckoutToFirebase(items, customerInfo) {
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shippingCost = this.calculateShipping(items);
+        const tax = this.calculateTax(subtotal);
+        const total = subtotal + shippingCost + tax;
 
-        // Simple shipping calculation
+        const orderData = {
+            customer: customerInfo,
+            items: items.map(item => ({
+                product_id: item.id,
+                name: item.name,
+                sku: item.sku,
+                price: item.price,
+                quantity: item.quantity,
+                total: item.price * item.quantity
+            })),
+            totals: {
+                subtotal,
+                shipping: shippingCost,
+                tax,
+                total
+            },
+            payment_method: 'stripe',
+            order_source: 'website',
+            order_id: 'order_' + Date.now()
+        };
+
+        await firebaseManager.logOrder(orderData);
+    }
+
+    calculateShipping(items) {
+        const totalWeight = items.reduce((sum, item) => sum + (item.weight * item.quantity), 0);
+
         if (totalWeight < 1) return 5.99;
         if (totalWeight < 3) return 8.99;
         if (totalWeight < 5) return 12.99;
@@ -710,7 +275,6 @@ class StripeIntegration {
     }
 
     calculateTax(subtotal) {
-        // Simple tax calculation (8.5% - replace with actual tax service)
         return subtotal * 0.085;
     }
 
@@ -728,8 +292,8 @@ class StripeIntegration {
 // ===== INVENTORY MANAGEMENT =====
 class InventoryManager {
     constructor() {
-        this.lowStockThreshold = CONFIG.inventory.lowStockThreshold;
-        this.ownerEmail = CONFIG.inventory.ownerEmail;
+        this.lowStockThreshold = INVENTORY_CONFIG.lowStockThreshold;
+        this.ownerEmail = INVENTORY_CONFIG.ownerEmail;
     }
 
     getStockStatus(product) {
@@ -758,201 +322,29 @@ class InventoryManager {
         const wasLowStock = previousStock <= this.lowStockThreshold;
         const wasInStock = previousStock > 0;
 
-        // Update stock
-        product.stock = Math.max(0, product.stock - quantitySold);
+        const newStock = Math.max(0, product.stock - quantitySold);
+        product.stock = newStock; // Update local copy
 
-        // Send inventory update to webhook
-        const inventoryData = {
-            event_type: 'inventory_updated',
-            timestamp: new Date().toISOString(),
-            product: {
-                id: product.id,
-                name: product.name,
-                sku: product.sku,
-                category: product.category
-            },
-            inventory_change: {
-                previous_stock: previousStock,
-                new_stock: product.stock,
-                quantity_sold: quantitySold,
-                reason
-            },
-            alerts: {
-                is_low_stock: product.stock <= this.lowStockThreshold,
-                is_sold_out: product.stock === 0,
-                needs_alert: false
-            }
-        };
-
-        // Check if alerts are needed
-        if (product.stock === 0 && wasInStock) {
-            inventoryData.alerts.needs_alert = true;
-            inventoryData.alerts.alert_type = 'sold_out';
-            await this.sendSoldOutAlert(product);
-        } else if (product.stock <= this.lowStockThreshold && !wasLowStock && product.stock > 0) {
-            inventoryData.alerts.needs_alert = true;
-            inventoryData.alerts.alert_type = 'low_stock';
-            await this.sendLowStockAlert(product);
+        // Update in Firebase
+        if (firebaseManager) {
+            await firebaseManager.updateProductStock(productId, newStock, reason);
         }
 
-        await webhookManager.sendData(inventoryData);
+        if (newStock === 0 && wasInStock) {
+            await firebaseManager.sendStockAlert(productId, 'sold_out');
+        } else if (newStock <= this.lowStockThreshold && !wasLowStock && newStock > 0) {
+            await firebaseManager.sendStockAlert(productId, 'low_stock');
+        }
 
-        console.log(`📦 Inventory updated: ${product.name} - ${product.stock} remaining`);
+        console.log(`Inventory updated: ${product.name} - ${newStock} remaining`);
         return true;
-    }
-
-    async sendLowStockAlert(product) {
-        const alertData = {
-            event_type: 'low_stock_alert',
-            timestamp: new Date().toISOString(),
-            product: {
-                id: product.id,
-                name: product.name,
-                sku: product.sku,
-                category: product.category,
-                current_stock: product.stock,
-                threshold: this.lowStockThreshold
-            },
-            recipient: this.ownerEmail,
-            priority: 'medium'
-        };
-
-        await webhookManager.sendData(alertData);
-        console.log('⚠️ Low stock alert sent for:', product.name);
-    }
-
-    async sendSoldOutAlert(product) {
-        const alertData = {
-            event_type: 'sold_out_alert',
-            timestamp: new Date().toISOString(),
-            product: {
-                id: product.id,
-                name: product.name,
-                sku: product.sku,
-                category: product.category,
-                current_stock: product.stock
-            },
-            recipient: this.ownerEmail,
-            priority: 'high'
-        };
-
-        await webhookManager.sendData(alertData);
-        console.log('🚨 Sold out alert sent for:', product.name);
-    }
-
-    generateDailyReport() {
-        const lowStockItems = products.filter(p => 
-            p.stock <= this.lowStockThreshold && p.stock > 0
-        );
-        const soldOutItems = products.filter(p => p.stock === 0);
-        
-        const report = {
-            event_type: 'daily_inventory_report',
-            timestamp: new Date().toISOString(),
-            summary: {
-                date: new Date().toLocaleDateString(),
-                total_products: products.length,
-                low_stock_count: lowStockItems.length,
-                sold_out_count: soldOutItems.length,
-                total_inventory_value: products.reduce((sum, p) => sum + (p.price * p.stock), 0)
-            },
-            low_stock_items: lowStockItems.map(p => ({
-                id: p.id,
-                name: p.name,
-                sku: p.sku,
-                category: p.category,
-                current_stock: p.stock,
-                price: p.price,
-                value: p.price * p.stock
-            })),
-            sold_out_items: soldOutItems.map(p => ({
-                id: p.id,
-                name: p.name,
-                sku: p.sku,
-                category: p.category,
-                price: p.price
-            }))
-        };
-
-        webhookManager.sendData(report);
-        console.log('📊 Daily inventory report generated');
-        return report;
-    }
-}
-
-// ===== WEBHOOK MANAGER =====
-class WebhookManager {
-    constructor() {
-        this.webhookUrl = CONFIG.webhook.url;
-        this.retryAttempts = 3;
-        this.retryDelay = 1000; // 1 second
-    }
-
-    async sendData(data, attempt = 1) {
-        try {
-            const response = await fetch(this.webhookUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'AllSeasonsSpouts/1.0'
-                },
-                body: JSON.stringify({
-                    ...data,
-                    webhook_metadata: {
-                        source: 'all_seasons_sprouts',
-                        version: '1.0',
-                        sent_at: new Date().toISOString(),
-                        attempt: attempt
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Webhook failed with status: ${response.status}`);
-            }
-
-            console.log(`✅ Webhook sent successfully: ${data.event_type}`);
-            return true;
-
-        } catch (error) {
-            console.error(`❌ Webhook failed (attempt ${attempt}):`, error);
-
-            if (attempt < this.retryAttempts) {
-                console.log(`🔄 Retrying webhook in ${this.retryDelay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, this.retryDelay));
-                return this.sendData(data, attempt + 1);
-            }
-
-            console.error('❌ Webhook failed after all retry attempts');
-            return false;
-        }
-    }
-
-    async sendOrderData(orderData) {
-        const data = {
-            event_type: 'order_completed',
-            timestamp: new Date().toISOString(),
-            order: orderData
-        };
-
-        return this.sendData(data);
-    }
-
-    async sendCustomerData(customerData) {
-        const data = {
-            event_type: 'customer_action',
-            timestamp: new Date().toISOString(),
-            customer: customerData
-        };
-
-        return this.sendData(data);
     }
 }
 
 // ===== INITIALIZE MANAGERS =====
 const stripeIntegration = new StripeIntegration();
 const inventoryManager = new InventoryManager();
-const webhookManager = new WebhookManager();
+let cartManager = null;
 
 // ===== DOM ELEMENTS =====
 const loadingScreen = document.getElementById('loadingScreen');
@@ -970,114 +362,44 @@ const filterTabs = document.querySelectorAll('.filter-tab');
 const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notificationText');
 
-// ===== INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-});
-
-async function initializeApp() {
-    try {
-        // Initialize Stripe
-        await stripeIntegration.initialize();
-        
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Setup header scroll effect
-        setupHeaderScroll();
-        
-        // Load products
-        await loadProducts();
-        
-        // Hide loading screen
-        setTimeout(() => {
-            loadingScreen.classList.add('hidden');
-        }, 1500);
-        
-        // Setup daily inventory reporting
-        scheduleDailyReport();
-        
-        // Send app initialization data
-        await webhookManager.sendData({
-            event_type: 'app_initialized',
-            timestamp: new Date().toISOString(),
-            user_agent: navigator.userAgent,
-            screen_resolution: `${screen.width}x${screen.height}`,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        });
-        
-        console.log('✅ App initialized successfully');
-        
-    } catch (error) {
-        console.error('❌ App initialization failed:', error);
-        showNotification('Failed to initialize payment system', 'error');
-    }
-}
-
-// ===== EVENT LISTENERS =====
-function setupEventListeners() {
-    // Filter tabs
-    filterTabs.forEach(tab => {
-        tab.addEventListener('click', handleFilterChange);
-    });
-
-    // Cart functionality
-    cartBtn.addEventListener('click', openCart);
-    cartClose.addEventListener('click', closeCart);
-    cartOverlay.addEventListener('click', closeCart);
-    checkoutBtn.addEventListener('click', proceedToCheckout);
-
-    // Hero CTA
-    const heroCTA = document.querySelector('.hero-cta');
-    if (heroCTA) {
-        heroCTA.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('collections').scrollIntoView({ 
-                behavior: 'smooth' 
-            });
-        });
-    }
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', handleKeyboardShortcuts);
-
-    // Mobile menu (placeholder for future implementation)
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-    }
-}
-
-function setupHeaderScroll() {
-    let lastScrollY = window.scrollY;
-    
-    window.addEventListener('scroll', () => {
-        const currentScrollY = window.scrollY;
-        
-        if (currentScrollY > 50) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-        
-        lastScrollY = currentScrollY;
-    }, { passive: true });
-}
-
 // ===== PRODUCT LOADING & RENDERING =====
 async function loadProducts() {
     try {
         showSkeletonLoading();
         
-        // Simulate loading time for better UX
-        await new Promise(resolve => setTimeout(resolve, 800));
+        if (firebaseManager && firebaseManager.isInitialized) {
+            // Load products from Firebase and update global products array
+            products = await firebaseManager.getProducts();
+            
+            if (products.length === 0) {
+                console.warn('No products found in Firebase');
+                showEmptyState();
+                return;
+            }
+        } else {
+            console.warn('Firebase not initialized, using fallback');
+            products = firebaseManager ? await firebaseManager.getFallbackProducts() : [];
+        }
         
+        await new Promise(resolve => setTimeout(resolve, 500));
         renderProducts();
         
     } catch (error) {
         console.error('Failed to load products:', error);
-        showErrorMessage('Failed to load products. Please try again.');
+        showErrorState();
     }
+}
+
+function showErrorState() {
+    productsGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; color: #dc2626;">
+            <h3 style="margin-bottom: 1rem;">Failed to load products</h3>
+            <p style="margin-bottom: 2rem;">Please check your internet connection and try again.</p>
+            <button onclick="loadProducts()" style="background: var(--color-primary); color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">
+                Retry Loading
+            </button>
+        </div>
+    `;
 }
 
 function renderProducts(productsToRender = null) {
@@ -1096,7 +418,6 @@ function renderProducts(productsToRender = null) {
         productCard.style.transform = 'translateY(20px)';
         productsGrid.appendChild(productCard);
         
-        // Staggered animation
         setTimeout(() => {
             productCard.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
             productCard.style.opacity = '1';
@@ -1121,18 +442,37 @@ function createProductCard(product) {
     
     card.innerHTML = `
         <div class="product-image-container">
-            <img src="${product.image}" alt="${product.name}" class="product-image" loading="lazy">
+            <img src="${product.image}" alt="${product.name}" class="product-image" loading="lazy" 
+                 onerror="this.src='https://via.placeholder.com/600x800?text=Image+Not+Found'">
             <div class="stock-badge ${stockInfo.class}">${stockInfo.text}</div>
-            <button class="quick-add-btn" onclick="addToCart(${product.id})" ${isOutOfStock ? 'disabled' : ''}>
+            <button class="quick-add-btn" onclick="addToCart('${product.id}')" ${isOutOfStock ? 'disabled' : ''}>
                 ${getAddToCartText(product)}
+            </button>
+            <button class="wishlist-btn" onclick="addToWishlist('${product.id}')" title="Add to Wishlist">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
             </button>
         </div>
         <div class="product-info">
             <div class="product-category">${getCategoryDisplayName(product.category)}</div>
             <h3 class="product-title">${product.name}</h3>
             <div class="product-price">$${product.price.toFixed(2)}</div>
+            ${product.sku ? `<div class="product-sku">SKU: ${product.sku}</div>` : ''}
         </div>
     `;
+
+    card.addEventListener('click', async (e) => {
+        if (!e.target.closest('.quick-add-btn') && !e.target.closest('.wishlist-btn')) {
+            if (firebaseManager) {
+                await firebaseManager.trackProductView(product.id, {
+                    name: product.name,
+                    category: product.category,
+                    price: product.price
+                });
+            }
+        }
+    });
     
     return card;
 }
@@ -1178,34 +518,22 @@ function showEmptyState() {
     `;
 }
 
-function showErrorMessage(message) {
-    productsGrid.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; color: #dc2626;">
-            <h3 style="margin-bottom: 1rem;">Error</h3>
-            <p>${message}</p>
-        </div>
-    `;
-}
-
 // ===== FILTER HANDLING =====
-function handleFilterChange(e) {
+async function handleFilterChange(e) {
     const newFilter = e.target.dataset.filter;
     
-    // Update active tab
     filterTabs.forEach(tab => tab.classList.remove('active'));
     e.target.classList.add('active');
     
-    // Update filter and re-render
     currentFilter = newFilter;
     renderProducts();
     
-    // Track filter usage
-    webhookManager.sendData({
-        event_type: 'filter_used',
-        timestamp: new Date().toISOString(),
-        filter: newFilter,
-        products_shown: getFilteredProducts().length
-    });
+    if (firebaseManager) {
+        await firebaseManager.logEvent('filter_used', {
+            filter: newFilter,
+            products_shown: getFilteredProducts().length
+        });
+    }
 }
 
 // ===== CART FUNCTIONALITY =====
@@ -1218,121 +546,119 @@ async function addToCart(productId) {
     const button = event.target;
     const originalText = button.textContent;
     
-    // Visual feedback
     button.style.background = '#2d5a27';
     button.textContent = 'Added!';
     button.disabled = true;
     
     try {
-        // Update inventory if not preorder
-        if (!product.preorder) {
+        if (!product.preorder && firebaseManager) {
             await inventoryManager.updateStock(productId, 1);
         }
         
-        // Add to cart
-        const existingItem = cart.find(item => item.id === productId);
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({ ...product, quantity: 1 });
+        await cartManager.addToCart(productId, 1);
+        
+        if (firebaseManager) {
+            await firebaseManager.logEvent('item_added_to_cart', {
+                product: {
+                    id: product.id,
+                    name: product.name,
+                    sku: product.sku,
+                    price: product.price,
+                    category: product.category
+                },
+                cart_total_items: cartManager.getCartCount(),
+                cart_total_value: cartManager.getCartTotal()
+            });
         }
         
-        // Send add to cart event
-        await webhookManager.sendData({
-            event_type: 'item_added_to_cart',
-            timestamp: new Date().toISOString(),
-            product: {
-                id: product.id,
-                name: product.name,
-                sku: product.sku,
-                price: product.price,
-                category: product.category
-            },
-            cart_total_items: cart.reduce((sum, item) => sum + item.quantity, 0),
-            cart_total_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-        });
-        
-        // Update UI
         updateCartCount();
         updateCartDisplay();
         showNotification(`${product.name} added to cart`);
         
-        // Reset button after delay
         setTimeout(() => {
             button.style.background = '';
             button.textContent = originalText;
             button.disabled = false;
-            
-            // Re-render products to update stock display
-            renderProducts();
+            loadProducts(); // Reload to show updated stock
         }, 1500);
         
     } catch (error) {
         console.error('Failed to add item to cart:', error);
         showNotification('Failed to add item to cart', 'error');
         
-        // Reset button
         button.style.background = '';
         button.textContent = originalText;
         button.disabled = false;
     }
 }
 
-function removeFromCart(productId) {
-    const removedItem = cart.find(item => item.id === productId);
-    cart = cart.filter(item => item.id !== productId);
+async function addToWishlist(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product || !firebaseManager) return;
+
+    try {
+        await firebaseManager.addToWishlist(productId, {
+            name: product.name,
+            price: product.price,
+            category: product.category,
+            image: product.image
+        });
+
+        showNotification(`${product.name} added to wishlist`);
+        
+        const wishlistBtn = event.target.closest('.wishlist-btn');
+        if (wishlistBtn) {
+            wishlistBtn.style.color = '#2d5a27';
+        }
+    } catch (error) {
+        console.error('Failed to add to wishlist:', error);
+        showNotification('Failed to add to wishlist', 'error');
+    }
+}
+
+async function removeFromCart(productId) {
+    await cartManager.removeFromCart(productId);
     
     updateCartCount();
     updateCartDisplay();
     
-    // Send remove from cart event
-    if (removedItem) {
-        webhookManager.sendData({
-            event_type: 'item_removed_from_cart',
-            timestamp: new Date().toISOString(),
-            product: {
-                id: removedItem.id,
-                name: removedItem.name,
-                quantity_removed: removedItem.quantity
-            },
-            cart_total_items: cart.reduce((sum, item) => sum + item.quantity, 0),
-            cart_total_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    if (firebaseManager) {
+        await firebaseManager.logEvent('item_removed_from_cart', {
+            product_id: productId,
+            cart_total_items: cartManager.getCartCount(),
+            cart_total_value: cartManager.getCartTotal()
         });
     }
 }
 
-function updateQuantity(productId, change) {
-    const item = cart.find(item => item.id === productId);
+async function updateQuantity(productId, change) {
+    const currentCart = cartManager.getCart();
+    const item = currentCart.find(item => item.id === productId);
     if (!item) return;
     
-    const oldQuantity = item.quantity;
     const newQuantity = item.quantity + change;
     
     if (newQuantity <= 0) {
-        removeFromCart(productId);
+        await removeFromCart(productId);
     } else {
-        item.quantity = newQuantity;
+        await cartManager.updateQuantity(productId, newQuantity);
         updateCartCount();
         updateCartDisplay();
         
-        // Send quantity update event
-        webhookManager.sendData({
-            event_type: 'cart_quantity_updated',
-            timestamp: new Date().toISOString(),
-            product: {
-                id: item.id,
-                name: item.name,
-                old_quantity: oldQuantity,
-                new_quantity: newQuantity
-            },
-            cart_total_items: cart.reduce((sum, item) => sum + item.quantity, 0),
-            cart_total_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-        });
+        if (firebaseManager) {
+            await firebaseManager.logEvent('cart_quantity_updated', {
+                product_id: productId,
+                old_quantity: item.quantity,
+                new_quantity: newQuantity,
+                cart_total_items: cartManager.getCartCount(),
+                cart_total_value: cartManager.getCartTotal()
+            });
+        }
     }
 }
 
 function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = cartManager ? cartManager.getCartCount() : 0;
     cartCount.textContent = totalItems;
     
     if (totalItems > 0) {
@@ -1345,7 +671,9 @@ function updateCartCount() {
 }
 
 function updateCartDisplay() {
-    if (cart.length === 0) {
+    const currentCart = cartManager ? cartManager.getCart() : [];
+    
+    if (currentCart.length === 0) {
         cartItems.innerHTML = `
             <div class="empty-cart">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -1364,7 +692,7 @@ function updateCartDisplay() {
     cartItems.innerHTML = '';
     let total = 0;
     
-    cart.forEach(item => {
+    currentCart.forEach(item => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
         
@@ -1379,13 +707,13 @@ function updateCartDisplay() {
                 </div>
                 <div class="cart-item-controls">
                     <div class="quantity-controls">
-                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
+                        <button class="quantity-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
                         <span class="quantity">${item.quantity}</span>
-                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+                        <button class="quantity-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
                     </div>
                     <div class="item-price">$${itemTotal.toFixed(2)}</div>
                 </div>
-                <button class="remove-item" onclick="removeFromCart(${item.id})">Remove</button>
+                <button class="remove-item" onclick="removeFromCart('${item.id}')">Remove</button>
             </div>
         `;
         cartItems.appendChild(cartItem);
@@ -1394,18 +722,17 @@ function updateCartDisplay() {
     cartTotal.textContent = `$${total.toFixed(2)}`;
 }
 
-function openCart() {
+async function openCart() {
     cartSidebar.classList.add('open');
     cartOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
     
-    // Track cart open event
-    webhookManager.sendData({
-        event_type: 'cart_opened',
-        timestamp: new Date().toISOString(),
-        cart_items: cart.length,
-        cart_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    });
+    if (firebaseManager) {
+        await firebaseManager.logEvent('cart_opened', {
+            cart_items: cartManager.getCartCount(),
+            cart_value: cartManager.getCartTotal()
+        });
+    }
 }
 
 function closeCart() {
@@ -1415,38 +742,198 @@ function closeCart() {
 }
 
 async function proceedToCheckout() {
-    if (cart.length === 0) return;
+    const currentCart = cartManager.getCart();
+    if (currentCart.length === 0) return;
     
     try {
         checkoutBtn.textContent = 'Processing...';
         checkoutBtn.disabled = true;
         
-        // Get customer IP for location data
+        const profile = await firebaseManager.getCurrentProfile();
         const customerInfo = {
+            email: profile?.personal_info?.email || null,
+            name: profile?.personal_info?.name || null,
+            phone: profile?.personal_info?.phone || null,
             ip: await stripeIntegration.getClientIP(),
             user_agent: navigator.userAgent,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            profile_id: profile?.id
         };
         
-        // Create Stripe checkout session
-        await stripeIntegration.createCheckoutSession(cart, customerInfo);
+        if (firebaseManager) {
+            await firebaseManager.logEvent('checkout_initiated', {
+                cart_items: currentCart.length,
+                cart_value: cartManager.getCartTotal(),
+                customer_info: customerInfo
+            });
+        }
+        
+        if (profile?.type === 'guest' && currentCart.length > 0) {
+            const shouldShowPrompt = confirm('Want to save your cart and track your order? Create a free account!');
+            if (shouldShowPrompt && profileUI) {
+                profileUI.showSignupPrompt();
+                return;
+            }
+        }
+        
+        await stripeIntegration.createCheckoutSession(currentCart, customerInfo);
         
     } catch (error) {
         console.error('Checkout failed:', error);
         showNotification('Checkout failed. Please try again.', 'error');
         
-        // Send error to webhook
-        webhookManager.sendData({
-            event_type: 'checkout_error',
-            timestamp: new Date().toISOString(),
-            error: error.message,
-            cart_items: cart.length,
-            cart_value: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-        });
+        if (firebaseManager) {
+            await firebaseManager.logEvent('checkout_error', {
+                error: error.message,
+                cart_items: currentCart.length,
+                cart_value: cartManager.getCartTotal()
+            });
+        }
     } finally {
         checkoutBtn.textContent = 'Proceed to Checkout';
-        checkoutBtn.disabled = cart.length === 0;
+        checkoutBtn.disabled = currentCart.length === 0;
     }
+}
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+async function initializeApp() {
+    try {
+        // Initialize Firebase
+        firebaseManager = new FirebaseManager();
+        await firebaseManager.initialize();
+        
+        // Initialize cart manager with profile integration
+        cartManager = new ProfileAwareCartManager(firebaseManager);
+        await cartManager.initialize();
+        
+        // Initialize Profile UI
+        profileUI = new ProfileUI();
+        profileUI.initialize(firebaseManager);
+        
+        // Make available globally
+        window.profileUI = profileUI;
+        window.firebaseManager = firebaseManager;
+        window.cartManager = cartManager;
+        
+        // Initialize Stripe
+        await stripeIntegration.initialize();
+        
+        // Setup event listeners
+        setupEventListeners();
+        setupHeaderScroll();
+        
+        // Load products (THIS IS CRITICAL - must populate products array)
+        await loadProducts();
+        
+        // Update cart display
+        updateCartCount();
+        updateCartDisplay();
+        
+        // Hide loading screen
+        setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+        }, 1500);
+        
+        // Setup remaining features
+        scheduleDailyReport();
+        
+        await firebaseManager.logEvent('app_initialized', {
+            user_agent: navigator.userAgent,
+            screen_resolution: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        
+        await trackUserSession();
+        setupSignupPrompts();
+        
+        console.log('App initialized successfully with profile system');
+        
+    } catch (error) {
+        console.error('App initialization failed:', error);
+        showNotification('Failed to initialize app', 'error');
+    }
+}
+
+// ===== SIGNUP PROMPT TRIGGERS =====
+function setupSignupPrompts() {
+    let actionsCount = 0;
+    let lastPromptTime = localStorage.getItem('lastSignupPrompt');
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    
+    const trackAction = () => {
+        actionsCount++;
+        
+        if (actionsCount >= 5 && 
+            firebaseManager?.currentProfile?.type === 'guest' &&
+            (!lastPromptTime || Date.now() - parseInt(lastPromptTime) > oneDayMs)) {
+            
+            setTimeout(() => {
+                if (profileUI) {
+                    profileUI.showSignupPrompt();
+                    localStorage.setItem('lastSignupPrompt', Date.now().toString());
+                }
+            }, 1000);
+            
+            actionsCount = 0;
+        }
+    };
+    
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.product-card') || 
+            e.target.closest('.filter-tab') || 
+            e.target.closest('.quick-add-btn')) {
+            trackAction();
+        }
+    });
+}
+
+// ===== EVENT LISTENERS =====
+function setupEventListeners() {
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', handleFilterChange);
+    });
+
+    cartBtn.addEventListener('click', openCart);
+    cartClose.addEventListener('click', closeCart);
+    cartOverlay.addEventListener('click', closeCart);
+    checkoutBtn.addEventListener('click', proceedToCheckout);
+
+    const heroCTA = document.querySelector('.hero-cta');
+    if (heroCTA) {
+        heroCTA.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('collections').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        });
+    }
+
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    }
+}
+
+function setupHeaderScroll() {
+    let lastScrollY = window.scrollY;
+    
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        
+        if (currentScrollY > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+        
+        lastScrollY = currentScrollY;
+    }, { passive: true });
 }
 
 // ===== NOTIFICATIONS =====
@@ -1461,92 +948,136 @@ function showNotification(message, type = 'success') {
 
 // ===== UTILITY FUNCTIONS =====
 function handleKeyboardShortcuts(e) {
-    // ESC key closes cart
-    if (e.key === 'Escape' && cartSidebar.classList.contains('open')) {
-        closeCart();
+    if (e.key === 'Escape') {
+        if (cartSidebar.classList.contains('open')) {
+            closeCart();
+        }
+        if (profileUI && document.getElementById('profileModal')?.classList.contains('show')) {
+            profileUI.closeProfileModal();
+        }
+        if (profileUI && document.getElementById('signupPromptModal')?.classList.contains('show')) {
+            profileUI.closeSignupPrompt();
+        }
     }
 }
 
 function toggleMobileMenu() {
-    // Placeholder for mobile menu functionality
     console.log('Mobile menu toggle (to be implemented)');
 }
 
 function scheduleDailyReport() {
-    // Schedule daily inventory report
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0); // 9 AM next day
+    tomorrow.setHours(9, 0, 0, 0);
     
     const msUntilTomorrow = tomorrow.getTime() - now.getTime();
     
     setTimeout(() => {
-        inventoryManager.generateDailyReport();
-        // Schedule next report
-        setInterval(() => {
-            inventoryManager.generateDailyReport();
-        }, 24 * 60 * 60 * 1000); // Every 24 hours
+        if (firebaseManager) {
+            firebaseManager.generateDailyReport();
+            setInterval(() => {
+                firebaseManager.generateDailyReport();
+            }, 24 * 60 * 60 * 1000);
+        }
     }, msUntilTomorrow);
+}
+
+// ===== ANALYTICS HELPER FUNCTIONS =====
+async function trackPageView(pageName) {
+    if (firebaseManager) {
+        await firebaseManager.trackPageView(pageName, {
+            timestamp: new Date().toISOString(),
+            referrer: document.referrer
+        });
+    }
+}
+
+async function trackUserSession() {
+    if (firebaseManager) {
+        const sessionData = {
+            session_start: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            screen_resolution: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            language: navigator.language,
+            referrer: document.referrer || 'direct'
+        };
+        
+        await firebaseManager.trackCustomerBehavior('session', 'start', sessionData);
+    }
 }
 
 // ===== PERFORMANCE MONITORING =====
 function measurePerformance() {
     if ('performance' in window) {
-        window.addEventListener('load', () => {
-            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-            console.log(`⚡ Page load time: ${loadTime}ms`);
+        window.addEventListener('load', async () => {
+            const navigationStart = performance.timeOrigin || performance.timing.navigationStart;
+            const loadTime = performance.now();
             
-            // Send performance data to webhook
-            webhookManager.sendData({
-                event_type: 'performance_metrics',
-                timestamp: new Date().toISOString(),
-                metrics: {
-                    page_load_time: loadTime,
+            let finalLoadTime = loadTime;
+            if (performance.timing && performance.timing.loadEventEnd && performance.timing.navigationStart) {
+                const timingLoadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                if (timingLoadTime > 0 && timingLoadTime < 60000) {
+                    finalLoadTime = timingLoadTime;
+                }
+            }
+            
+            console.log(`Page load time: ${Math.round(finalLoadTime)}ms`);
+            
+            if (firebaseManager) {
+                await firebaseManager.logEvent('performance_metrics', {
+                    page_load_time: Math.round(finalLoadTime),
                     user_agent: navigator.userAgent,
                     screen_resolution: `${screen.width}x${screen.height}`,
                     connection_type: navigator.connection?.effectiveType || 'unknown'
-                }
-            });
+                });
+            }
         });
     }
 }
 
 // ===== ERROR HANDLING =====
-window.addEventListener('error', (e) => {
-    console.error('❌ Global error:', e.error);
+window.addEventListener('error', async (e) => {
+    console.error('Global error:', e.error);
     
-    webhookManager.sendData({
-        event_type: 'javascript_error',
-        timestamp: new Date().toISOString(),
-        error: {
+    if (firebaseManager) {
+        await firebaseManager.logEvent('javascript_error', {
             message: e.message,
             filename: e.filename,
             line: e.lineno,
             column: e.colno,
             stack: e.error?.stack
-        }
-    });
+        });
+    }
 });
 
-window.addEventListener('unhandledrejection', (e) => {
-    console.error('❌ Unhandled promise rejection:', e.reason);
+window.addEventListener('unhandledrejection', async (e) => {
+    console.error('Unhandled promise rejection:', e.reason);
     
-    webhookManager.sendData({
-        event_type: 'promise_rejection',
-        timestamp: new Date().toISOString(),
-        error: {
+    if (firebaseManager) {
+        await firebaseManager.logEvent('promise_rejection', {
             reason: e.reason,
             stack: e.reason?.stack
-        }
-    });
+        });
+    }
 });
 
 // ===== INITIALIZE PERFORMANCE MONITORING =====
 measurePerformance();
 
 // ===== EXPOSE GLOBAL FUNCTIONS =====
-// These functions need to be global for onclick handlers
 window.addToCart = addToCart;
+window.addToWishlist = addToWishlist;
 window.removeFromCart = removeFromCart;
 window.updateQuantity = updateQuantity;
+window.updateCartCount = updateCartCount;
+window.updateCartDisplay = updateCartDisplay;
+
+// ===== ADDITIONAL INITIALIZATION =====
+setTimeout(async () => {
+    if (firebaseManager && firebaseManager.isInitialized) {
+        await trackPageView('home');
+        await trackUserSession();
+    }
+}, 2000);
