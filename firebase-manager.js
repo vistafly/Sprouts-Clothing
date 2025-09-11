@@ -388,54 +388,9 @@ class FirebaseManager {
     // ===== IMPROVED ANALYTICS & EVENTS =====
     
     async logEvent(eventName, eventData = {}) {
-        try {
-            const timestamp = new Date().toISOString();
-            const eventId = this.generateEventId();
-            
-            const enrichedEventData = {
-                id: eventId,
-                event_name: eventName,
-                event_data: eventData,
-                timestamp,
-                date: timestamp.split('T')[0], // For daily aggregations
-                profile_id: this.currentProfile?.id || 'anonymous',
-                profile_type: this.currentProfile?.type || 'unknown',
-                session_id: this.currentProfile?.session_id || 'no_session',
-                user_agent: navigator.userAgent,
-                page_url: window.location.href,
-                page_title: document.title
-            };
-            
-            // Method 1: Store in main analytics collection (for cross-user analysis)
-            if (this.db) {
-                await this.db.collection(this.collections.analytics).doc(eventId).set(enrichedEventData);
-            }
-            
-            // Method 2: Store in user-specific subcollection (for user-specific queries)
-            if (this.currentProfile?.id && this.db) {
-                await this.db
-                    .collection(this.collections.profiles)
-                    .doc(this.currentProfile.id)
-                    .collection('events')
-                    .doc(eventId)
-                    .set(enrichedEventData);
-            }
-            
-            // Method 3: Update lightweight profile summary
-            await this.updateProfileAnalyticsSummary(eventName, eventData);
-            
-            // Method 4: Update daily aggregations
-            await this.updateDailyAnalytics(eventName, eventData, timestamp);
-            
-            // Log to Firebase Analytics service (only if available)
-            if (this.analytics) {
-                this.analytics.logEvent(eventName, eventData);
-            }
-            
-        } catch (error) {
-            console.error('Failed to log event:', error);
-        }
-    }
+    // Analytics disabled - stub method
+    return Promise.resolve();
+}
 
     // Generate unique event ID
     generateEventId() {

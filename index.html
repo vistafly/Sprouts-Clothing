@@ -29,11 +29,6 @@
             border-radius: 6px;
             transition: all 0.3s ease;
         }
-
-        .profile-btn-header:hover {
-            background: #f3f4f6;
-        }
-
         .wishlist-btn {
             position: absolute;
             top: 10px;
@@ -116,12 +111,13 @@
 .signin-options {
     text-align: center;
     margin-bottom: 1rem;
+    margin-top: 1rem;
 }
 
 .forgot-password-btn {
     background: none;
     border: none;
-    color: #2d5a27;
+    color: #3d3d3d;
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.875rem;
@@ -129,7 +125,7 @@
 }
 
 .forgot-password-btn:hover {
-    color: #1f3d1a;
+    color: #636363;
 }
 
 /* Form auto-complete styling */
@@ -175,9 +171,9 @@
 .profile-modal-content, .signup-prompt-content {
     background: white;
     border-radius: 12px;
-    max-width: 500px;
+    max-width: 1000px;
     width: 90%;
-    max-height: 90vh;
+    max-height: 95vh;
     overflow-y: auto;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     transform: translateY(20px);
@@ -246,18 +242,26 @@
 
 .form-group input,
 .form-group select {
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
+  padding: 0.75rem;
+  border: none; /* remove harsh border */
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #2d5a27;
-    box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+border-color: #5e5e5e;
+box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.25),   /* small sharp shadow */
+    0 8px 20px rgba(0, 0, 0, 0.2),   /* medium soft shadow */
+    0 16px 40px rgba(0, 0, 0, 0.1);  /* large subtle shadow */
+
 }
 
 .form-help {
@@ -294,8 +298,8 @@
 }
 
 .checkbox-label input[type="checkbox"]:checked {
-    background: #2d5a27;
-    border-color: #2d5a27;
+    background: #000000;
+    border-color: #000000;
 }
 
 .checkbox-label input[type="checkbox"]:checked::after {
@@ -311,8 +315,8 @@
 
 /* Button Styles */
 .signup-submit-btn, .signin-submit-btn {
-    background: #2d5a27;
-    color: white;
+    background: #f3f4f6;
+    color: #374151;
     padding: 0.875rem 1.5rem;
     border: none;
     border-radius: 6px;
@@ -321,11 +325,6 @@
     cursor: pointer;
     transition: background 0.2s ease;
     margin-top: 0.5rem;
-}
-
-.signup-submit-btn:hover:not(:disabled),
-.signin-submit-btn:hover:not(:disabled) {
-    background: #1f3d1a;
 }
 
 .signup-submit-btn:disabled,
@@ -340,17 +339,13 @@
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
     border: none;
 }
 
-.profile-btn-primary {
-    background: #2d5a27;
-    color: white;
-}
-
-.profile-btn-primary:hover {
-    background: #1f3d1a;
+.profile-btn-primary,.profile-btn-tertiary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .profile-btn-secondary {
@@ -359,32 +354,23 @@
     border: 1px solid #d1d5db;
 }
 
-.profile-btn-secondary:hover {
+.profile-btn-secondary:hover,.profile-btn-primary:hover.profile-btn-tertiary:hover {
     background: #e5e7eb;
-}
+    transition: all 0.2s ease;
 
-.profile-btn-tertiary {
-    background: none;
-    color: #6b7280;
-    border: 1px solid #d1d5db;
-}
-
-.profile-btn-tertiary:hover {
-    background: #f9fafb;
-    color: #374151;
 }
 
 .link-btn {
     background: none;
     border: none;
-    color: #2d5a27;
+    color: #3d3d3d;
     text-decoration: underline;
     cursor: pointer;
     font-size: inherit;
 }
 
 .link-btn:hover {
-    color: #1f3d1a;
+    color: #636363;
 }
 
 /* Profile Content */
@@ -436,7 +422,7 @@
 .profile-stat-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2d5a27;
+    color: #000000;
     margin-bottom: 0.25rem;
 }
 
@@ -506,53 +492,6 @@
     color: #6b7280;
 }
 
-/* Activity List */
-.profile-activity {
-    background: #f9fafb;
-    border-radius: 8px;
-    padding: 1rem;
-}
-
-.profile-activity h4 {
-    margin: 0 0 1rem 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #111827;
-}
-
-.profile-activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.profile-activity-item {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-}
-
-.profile-activity-icon {
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.profile-activity-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.profile-activity-action {
-    font-size: 0.875rem;
-    color: #374151;
-    font-weight: 500;
-}
-
-.profile-activity-time {
-    font-size: 0.75rem;
-    color: #6b7280;
-}
-
 .profile-no-activity {
     color: #6b7280;
     font-style: italic;
@@ -574,7 +513,7 @@
 .profile-avatar {
     width: 60px;
     height: 60px;
-    background: #2d5a27;
+    background: #000000;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -642,15 +581,6 @@
 .profile-info-item span {
     color: #6b7280;
     font-size: 0.875rem;
-}
-
-/* Profile Actions */
-.profile-actions {
-    display: flex;
-    gap: 0.75rem;
-    padding: 1rem;
-    border-top: 1px solid #e5e7eb;
-    background: #f9fafb;
 }
 
 /* Form Sections */
@@ -1752,13 +1682,38 @@ class ProfileUI {
     }
 
     initialize(firebaseManager) {
-        this.firebaseManager = firebaseManager;
-        this.setupModalContainer();
-        this.setupEventListeners();
-        this.loadProfile();
-        this.isInitialized = true;
-        console.log('ProfileUI initialized');
+    this.firebaseManager = firebaseManager;
+    this.setupModalContainer();
+    this.setupEventListeners();
+    this.loadProfile();
+    this.isInitialized = true;
+    
+    const enhancedSignInStyles = `
+
+.profile-btn-header.guest-with-cart {
+    position: relative;
+}
+
+.profile-btn-header.guest-with-cart:hover {
+    background: rgba(0, 0, 0, 0.08); /* subtle dark hover */
+}
+
+/* Animation for smooth transitions */
+.profile-btn-header {
+    transition: all 0.3s ease;
+}
+`;
+
+
+    if (!document.getElementById('signin-ui-styles')) {
+        const styleSheet = document.createElement('style');
+        styleSheet.id = 'signin-ui-styles';
+        styleSheet.textContent = enhancedSignInStyles; // Changed from signedInStyles to enhancedSignInStyles
+        document.head.appendChild(styleSheet);
     }
+    
+    console.log('ProfileUI initialized');
+}
 
     setupModalContainer() {
         // Create modal container if it doesn't exist
@@ -1788,44 +1743,83 @@ class ProfileUI {
     }
 
     async loadProfile() {
-        if (!this.firebaseManager) return;
-        
-        try {
+    if (!this.firebaseManager) return;
+    
+    try {
+        // Force refresh from Firebase/profile manager
+        if (this.firebaseManager.profileManager) {
+            this.currentProfile = await this.firebaseManager.profileManager.getCurrentProfile();
+        } else {
             this.currentProfile = await this.firebaseManager.getCurrentProfile();
-            this.updateProfileButton();
-        } catch (error) {
-            console.error('Failed to load profile:', error);
         }
+        
+        console.log('Profile loaded:', this.currentProfile?.type, this.currentProfile?.id);
+        
+        // Update UI elements that depend on profile
+        this.updateProfileButton();
+        
+    } catch (error) {
+        console.error('Failed to load profile:', error);
     }
+}
 
     updateProfileButton() {
-        const profileBtn = document.getElementById('profileBtn');
-        if (!profileBtn || !this.currentProfile) return;
+    const profileBtn = document.getElementById('profileBtn');
+    if (!profileBtn || !this.currentProfile) return;
 
-        const isGuest = this.currentProfile.type === 'guest';
-        const cartItems = this.currentProfile.shopping?.cart?.items?.length || 0;
-        
-        // Add visual indicator for guest users with items
-        if (isGuest && cartItems > 0) {
-            profileBtn.style.position = 'relative';
-            let indicator = profileBtn.querySelector('.guest-indicator');
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.className = 'guest-indicator';
-                indicator.style.cssText = `
-                    position: absolute;
-                    top: -2px;
-                    right: -2px;
-                    width: 8px;
-                    height: 8px;
-                    background: #f59e0b;
-                    border-radius: 50%;
-                    border: 2px solid white;
-                `;
-                profileBtn.appendChild(indicator);
-            }
+    const isGuest = this.currentProfile.type === 'guest';
+    const isSignedIn = this.currentProfile.type === 'registered';
+    const cartItems = this.currentProfile.shopping?.cart?.items?.length || 0;
+    
+    // Clear previous state classes
+    profileBtn.classList.remove('signed-in', 'guest-with-cart');
+    
+    if (isSignedIn) {
+        // Remove guest indicator if it exists
+        const indicator = profileBtn.querySelector('.guest-indicator');
+        if (indicator) {
+            indicator.remove();
         }
+        
+        // Add signed-in styling
+        profileBtn.classList.add('signed-in');
+        const userName = this.currentProfile.personal_info?.name || 'User';
+        profileBtn.title = `Signed in as ${userName}`;
+        
+        console.log('Profile button updated for signed-in user:', userName);
+        
+    } else if (isGuest && cartItems > 0) {
+        // Add visual indicator for guest users with items
+        profileBtn.classList.add('guest-with-cart');
+        profileBtn.style.position = 'relative';
+        
+        let indicator = profileBtn.querySelector('.guest-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'guest-indicator';
+            indicator.style.cssText = `
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                width: 8px;
+                height: 8px;
+                background: #f59e0b;
+                border-radius: 50%;
+                border: 2px solid white;
+            `;
+            profileBtn.appendChild(indicator);
+        }
+        profileBtn.title = 'Guest user - Sign in to save cart';
+        
+    } else {
+        // Clean guest state
+        const indicator = profileBtn.querySelector('.guest-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+        profileBtn.title = 'User Profile';
     }
+}
 
     showProfileModal() {
         if (!this.currentProfile) {
@@ -1931,13 +1925,7 @@ class ProfileUI {
                             <p>Create an account to save ${stats.cartItems} item${stats.cartItems !== 1 ? 's' : ''} worth $${stats.cartTotal.toFixed(2)}</p>
                         </div>
                     </div>
-                ` : ''}
-                
-                <div class="profile-activity">
-                    <h4>Recent Activity</h4>
-                    ${this.createActivityList()}
-                </div>
-            </div>
+                ` : ''}      
         `;
     }
 
@@ -2011,10 +1999,6 @@ class ProfileUI {
                     </div>
                 </div>
                 
-                <div class="profile-activity">
-                    <h4>Recent Activity</h4>
-                    ${this.createActivityList()}
-                </div>
             </div>
         `;
     }
@@ -2026,20 +2010,6 @@ class ProfileUI {
         if (recentEvents.length === 0) {
             return '<p class="profile-no-activity">No recent activity</p>';
         }
-        
-        return `
-            <div class="profile-activity-list">
-                ${recentEvents.map(event => `
-                    <div class="profile-activity-item">
-                        <div class="profile-activity-icon">${this.getActivityIcon(event.action)}</div>
-                        <div class="profile-activity-details">
-                            <div class="profile-activity-action">${this.formatActivityAction(event.action)}</div>
-                            <div class="profile-activity-time">${this.formatTime(event.timestamp)}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
     }
 
     createProfileActions() {
@@ -2168,7 +2138,6 @@ class ProfileUI {
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="signupMarketing" name="marketing">
-                            <span class="checkmark"></span>
                             Send me style updates and exclusive offers
                         </label>
                     </div>
@@ -2351,16 +2320,11 @@ createSignInModal() {
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="rememberMe" name="rememberMe">
-                            <span class="checkmark"></span>
                             Remember me
                         </label>
                     </div>
                     <button type="submit" class="signin-submit-btn">Sign In</button>
                 </form>
-                
-                <div class="signin-divider">
-                    <span>or</span>
-                </div>
                 
                 <div class="signin-options">
                     <button type="button" class="forgot-password-btn" onclick="window.profileUI.showForgotPassword()">
@@ -2385,6 +2349,7 @@ createSignInModal() {
     return modal;
 }
 
+// Updated handleSignIn method with proper UI refresh
 async handleSignIn(event) {
     event.preventDefault();
     
@@ -2402,7 +2367,7 @@ async handleSignIn(event) {
 
         console.log('ProfileUI: Starting sign in process...');
 
-        // Store current guest data before sign in (in case we need to merge)
+        // Store current guest data before sign in
         const currentGuestData = this.currentProfile?.type === 'guest' ? { ...this.currentProfile } : null;
 
         // Sign in with Firebase Auth
@@ -2431,29 +2396,19 @@ async handleSignIn(event) {
             had_guest_data: !!currentGuestData
         });
 
-        // Reload profile to get registered user data
-        await this.loadProfile();
+        // CRITICAL: Wait for auth state change to complete and profile to reload
+        await this.waitForProfileUpdate(user.uid);
         
-        console.log('ProfileUI: Profile reloaded. User profile type:', this.currentProfile?.type);
+        console.log('ProfileUI: Profile updated. User profile type:', this.currentProfile?.type);
 
+        // Close the sign-in modal
+        this.closeSignInModal();
+        
         // Show success message
         this.showSuccessMessage('Signed in successfully! Welcome back.');
         
-        // Close all modals BEFORE resetting button state
-        this.closeAllModals();
-        
-        // Update cart display to reflect registered user profile
-        if (window.cartManager) {
-            await window.cartManager.syncWithProfile();
-            window.updateCartCount();
-            window.updateCartDisplay();
-        }
-        
-        // Update profile button display
-        this.updateProfileButton();
-        
-        // DON'T reset button state here - modal is closing
-        return;
+        // Update all UI components with new profile data
+        await this.refreshUIAfterSignIn();
         
     } catch (error) {
         console.error('ProfileUI: Sign in failed:', error);
@@ -2480,7 +2435,94 @@ async handleSignIn(event) {
         submitBtn.disabled = false;
     }
 }
+// New method to wait for profile update after authentication
+async waitForProfileUpdate(expectedUserId, maxWaitTime = 5000) {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < maxWaitTime) {
+        // Force reload the profile
+        await this.loadProfile();
+        
+        // Check if we now have a registered profile with the correct user ID
+        if (this.currentProfile && 
+            this.currentProfile.type === 'registered' && 
+            this.currentProfile.id === expectedUserId) {
+            console.log('Profile successfully updated to registered user');
+            return;
+        }
+        
+        // Wait a bit before checking again
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.warn('Profile update took longer than expected');
+}
+async refreshUIAfterSignIn() {
+    try {
+        // 1. Update profile button display
+        this.updateProfileButton();
+        
+        // 2. Sync cart with new profile
+        if (window.cartManager) {
+            await window.cartManager.syncWithProfile();
+            window.updateCartCount();
+            window.updateCartDisplay();
+        }
+        
+        // 3. If profile modal is open, refresh it with new data
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && profileModal.classList.contains('show')) {
+            // Close current modal and reopen with new data
+            this.closeProfileModal();
+            setTimeout(() => {
+                this.showProfileModal();
+            }, 300); // Wait for close animation
+        }
+        
+        // 4. Update any other UI components that depend on profile state
+        this.updateHeaderUserDisplay();
+        
+        console.log('UI refresh completed after sign-in');
+        
+    } catch (error) {
+        console.error('Error refreshing UI after sign-in:', error);
+    }
+}
 
+// New method to update header user display
+updateHeaderUserDisplay() {
+    const profileBtn = document.getElementById('profileBtn');
+    if (!profileBtn || !this.currentProfile) return;
+
+    const isSignedIn = this.currentProfile.type === 'registered';
+    
+    if (isSignedIn) {
+        // Add signed-in class for styling
+        profileBtn.classList.add('signed-in');
+        
+        // Remove guest indicator if it exists
+        const indicator = profileBtn.querySelector('.guest-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+        
+        // Update title and styling
+        const userName = this.currentProfile.personal_info?.name || 'User';
+        profileBtn.title = `Signed in as ${userName} - Click to view profile`;
+        
+        // Add user initial or icon if desired
+        const userIcon = profileBtn.querySelector('svg');
+        if (userIcon && userName) {
+            // You could replace the icon with user initial
+            // userIcon.innerHTML = `<text x="12" y="16" text-anchor="middle" fill="currentColor" font-size="10" font-weight="600">${userName.charAt(0).toUpperCase()}</text>`;
+        }
+        
+    } else {
+        // Remove signed-in styling
+        profileBtn.classList.remove('signed-in');
+        profileBtn.title = 'User Profile';
+    }
+}
 // Helper method to merge guest data into registered account
 async mergeGuestDataIntoRegistered(guestData, user) {
     try {
@@ -2667,14 +2709,12 @@ closeAllModals() {
                             <div class="form-group checkbox-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" name="notifications" ${preferences.notifications ? 'checked' : ''}>
-                                    <span class="checkmark"></span>
                                     Email notifications
                                 </label>
                             </div>
                             <div class="form-group checkbox-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" name="marketing_emails" ${preferences.marketing_emails ? 'checked' : ''}>
-                                    <span class="checkmark"></span>
                                     Marketing emails and offers
                                 </label>
                             </div>
