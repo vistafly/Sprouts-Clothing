@@ -825,6 +825,7 @@ async function initializeApp() {
         // Setup event listeners
         setupEventListeners();
         setupHeaderScroll();
+        setupNavigationRouting();
         
         // Load products (THIS IS CRITICAL - must populate products array)
         await loadProducts();
@@ -1081,3 +1082,60 @@ setTimeout(async () => {
         await trackUserSession();
     }
 }, 2000);
+
+// Navigation to Filter Routing - Direct to filter-tabs section
+function setupNavigationRouting() {
+    const navLinks = document.querySelectorAll('.nav-menu a');
+    
+    // Map nav links to filter values
+    const navToFilterMap = {
+        '#boys': 'boys',
+        '#girls': 'girls',
+        '#women': 'women',
+        '#collections': 'all'
+    };
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            
+            // Skip home and contact
+            if (href === '#home' || href === '#contact') return;
+            
+            // Handle filter routing
+            if (navToFilterMap[href]) {
+                e.preventDefault();
+                
+                // Find the collections section to keep it in view
+                const collectionsSection = document.querySelector('.collections-section') || 
+                                         document.getElementById('collections');
+                
+                if (collectionsSection) {
+                    // Scroll to show the collections section with proper header offset
+                    const headerHeight = 100; // Adjust based on your header height
+                    const elementTop = collectionsSection.getBoundingClientRect().top + window.pageYOffset;
+                    const offsetPosition = elementTop - headerHeight;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+                
+                // Activate the correct filter tab after scroll
+                setTimeout(() => {
+                    const targetFilter = navToFilterMap[href];
+                    const targetTab = document.querySelector(`[data-filter="${targetFilter}"]`);
+                    
+                    if (targetTab) {
+                        // Simulate clicking the filter tab - this will trigger your existing handleFilterChange
+                        targetTab.click();
+                    }
+                }, 600); // Wait for scroll animation to complete
+            }
+        });
+    });
+}
+
+// Add this line to your initializeApp() function after setupEventListeners():
+// setupNavigationRouting();
