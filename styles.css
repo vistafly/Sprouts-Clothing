@@ -1861,3 +1861,46 @@ a:focus {
         border: 1px solid currentColor;
     }
 }
+.signin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.signin-submit-btn {
+    background: var(--color-primary);
+    color: white;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.signin-submit-btn:hover:not(:disabled) {
+    background: var(--color-secondary);
+    transform: translateY(-1px);
+}
+
+.signin-submit-btn:disabled {
+    background: var(--color-quaternary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.signin-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.signin-footer p {
+    margin: 0;
+    color: var(--color-tertiary);
+    font-size: 0.9rem;
+}

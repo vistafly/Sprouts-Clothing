@@ -443,7 +443,7 @@ function createProductCard(product) {
     card.innerHTML = `
         <div class="product-image-container">
             <img src="${product.image}" alt="${product.name}" class="product-image" loading="lazy" 
-                 onerror="this.src='https://via.placeholder.com/600x800?text=Image+Not+Found'">
+     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDYwMCA4MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iODAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjMwMCIgeT0iNDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUNBM0FGIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pgo8L3N2Zz4K'">
             <div class="stock-badge ${stockInfo.class}">${stockInfo.text}</div>
             <button class="quick-add-btn" onclick="addToCart('${product.id}')" ${isOutOfStock ? 'disabled' : ''}>
                 ${getAddToCartText(product)}

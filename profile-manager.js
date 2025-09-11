@@ -110,25 +110,22 @@ class FirebaseProfileManager extends BaseProfileManager {
         this.db = db;
         this.auth = auth;
         this.profilesCollection = 'user_profiles';
+        this.batchUpdateScheduled = false;
     }
 
     async initializeProfile() {
         try {
-            // Check if user is authenticated
             const user = this.auth.currentUser;
             
             if (user) {
-                // Load or create registered profile
                 this.currentProfile = await this.loadRegisteredProfile(user);
             } else {
-                // Create or load guest profile
                 this.currentProfile = await this.loadGuestProfile();
             }
             
             return this.currentProfile;
         } catch (error) {
             console.error('Failed to initialize profile:', error);
-            // Fallback to local profile
             this.currentProfile = this.createFallbackProfile();
             return this.currentProfile;
         }
@@ -181,17 +178,15 @@ class FirebaseProfileManager extends BaseProfileManager {
         }
     }
 
-    async loadGuestProfile() {
+     async loadGuestProfile() {
         try {
             const sessionId = this.generateSessionId();
             const guestProfileKey = `guest_profile_${sessionId}`;
             
-            // Try to load from localStorage first
             const localProfile = localStorage.getItem(guestProfileKey);
             if (localProfile) {
                 const profile = JSON.parse(localProfile);
                 
-                // Sync with Firebase if online
                 try {
                     await this.syncGuestProfileToFirebase(profile);
                 } catch (error) {
@@ -201,14 +196,11 @@ class FirebaseProfileManager extends BaseProfileManager {
                 return profile;
             }
             
-            // Create new guest profile
             const profileId = `guest_${sessionId}`;
             const profile = this.createBaseProfile(profileId, 'guest');
             
-            // Save locally
             localStorage.setItem(guestProfileKey, JSON.stringify(profile));
             
-            // Try to save to Firebase
             try {
                 await this.db.collection(this.profilesCollection).doc(profileId).set(profile);
             } catch (error) {
@@ -219,6 +211,85 @@ class FirebaseProfileManager extends BaseProfileManager {
         } catch (error) {
             console.error('Failed to load guest profile:', error);
             return this.createFallbackProfile();
+        }
+    }
+
+    // NEW METHOD: Convert guest session to registered profile
+    async convertGuestToRegistered(userInfo, password) {
+        if (!this.currentProfile || this.currentProfile.type !== 'guest') {
+            throw new Error('No guest profile to convert');
+        }
+
+        try {
+            // Create Firebase auth user
+            const userCredential = await this.auth.createUserWithEmailAndPassword(userInfo.email, password);
+            const user = userCredential.user;
+
+            // Update user display name
+            if (userInfo.name) {
+                await user.updateProfile({ displayName: userInfo.name });
+            }
+
+            // Get current guest profile data
+            const guestProfile = { ...this.currentProfile };
+            const sessionId = this.generateSessionId();
+            const guestProfileKey = `guest_profile_${sessionId}`;
+
+            // Create new registered profile using SAME document ID (overwriting guest)
+            const registeredProfile = {
+                ...guestProfile, // Keep all existing data
+                id: user.uid, // Use Firebase Auth UID as the new profile ID
+                type: 'registered',
+                updated_at: new Date().toISOString(),
+                personal_info: {
+                    ...guestProfile.personal_info,
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    phone: userInfo.phone || null
+                },
+                preferences: {
+                    ...guestProfile.preferences,
+                    marketing_emails: userInfo.marketing_emails || false
+                },
+                converted_from_guest: {
+                    original_guest_id: guestProfile.id,
+                    converted_at: new Date().toISOString(),
+                    guest_session_id: sessionId
+                }
+            };
+
+            // CRITICAL: Delete the old guest document first
+            try {
+                await this.db.collection(this.profilesCollection).doc(guestProfile.id).delete();
+                console.log('Deleted old guest profile:', guestProfile.id);
+            } catch (error) {
+                console.warn('Failed to delete old guest profile:', error);
+            }
+
+            // Save new registered profile with user's UID
+            await this.db.collection(this.profilesCollection).doc(user.uid).set(registeredProfile);
+
+            // Clean up local storage
+            localStorage.removeItem(guestProfileKey);
+
+            // Update current profile reference
+            this.currentProfile = registeredProfile;
+
+            console.log('Successfully converted guest to registered profile:', user.uid);
+            
+            // Log conversion event
+            await this.trackAction('guest_converted_to_registered', {
+                original_guest_id: guestProfile.id,
+                new_user_id: user.uid,
+                cart_items: registeredProfile.shopping.cart.items.length,
+                cart_value: registeredProfile.shopping.cart.total
+            });
+
+            return registeredProfile;
+
+        } catch (error) {
+            console.error('Failed to convert guest to registered:', error);
+            throw error;
         }
     }
 

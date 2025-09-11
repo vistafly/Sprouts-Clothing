@@ -1,5 +1,3 @@
-// ===== FIREBASE MANAGER WITH PROFILE INTEGRATION =====
-
 class FirebaseManager {
     constructor() {
         this.app = null;
@@ -16,48 +14,52 @@ class FirebaseManager {
             products: 'products',
             orders: 'orders',
             analytics: 'analytics',
+            dailyAnalytics: 'daily_analytics',
             inventory: 'inventory_alerts',
             reports: 'daily_reports'
         };
     }
 
     async initialize() {
-    try {
-        // Initialize Firebase
-        this.app = firebase.initializeApp(FIREBASE_CONFIG);
-        this.db = firebase.firestore();
-        this.auth = firebase.auth();
-        
-        // Only initialize Analytics in production or if explicitly needed
         try {
-            if (firebase.analytics && !window.location.hostname.includes('localhost')) {
-                this.analytics = firebase.analytics();
+            // Initialize Firebase
+            this.app = firebase.initializeApp(FIREBASE_CONFIG);
+            this.db = firebase.firestore();
+            this.auth = firebase.auth();
+            
+            // Only initialize Analytics in production or if explicitly needed
+            try {
+                if (firebase.analytics && !window.location.hostname.includes('localhost')) {
+                    this.analytics = firebase.analytics();
+                }
+            } catch (analyticsError) {
+                console.warn('Analytics not available (this is normal for local development):', analyticsError.message);
             }
-        } catch (analyticsError) {
-            console.warn('Analytics not available (this is normal for local development):', analyticsError.message);
+            
+            // Initialize Profile Manager
+            this.profileManager = new FirebaseProfileManager(this.db, this.auth);
+            
+            // Set up auth state listener
+            this.setupAuthStateListener();
+            
+            // Initialize user profile
+            await this.initializeUserProfile();
+            
+            // Setup analytics console for easy debugging
+            this.setupAnalyticsConsole();
+            
+            this.isInitialized = true;
+            console.log('Firebase Manager initialized successfully');
+            
+            return this;
+        } catch (error) {
+            console.error('Firebase initialization failed:', error);
+            // Fallback to offline profile manager
+            this.profileManager = new OfflineProfileManager();
+            await this.initializeUserProfile();
+            throw error;
         }
-        
-        // Initialize Profile Manager
-        this.profileManager = new FirebaseProfileManager(this.db, this.auth);
-        
-        // Set up auth state listener
-        this.setupAuthStateListener();
-        
-        // Initialize user profile
-        await this.initializeUserProfile();
-        
-        this.isInitialized = true;
-        console.log('Firebase Manager initialized successfully');
-        
-        return this;
-    } catch (error) {
-        console.error('Firebase initialization failed:', error);
-        // Fallback to offline profile manager
-        this.profileManager = new OfflineProfileManager();
-        await this.initializeUserProfile();
-        throw error;
     }
-}
 
     setupAuthStateListener() {
         this.auth.onAuthStateChanged(async (user) => {
@@ -66,6 +68,18 @@ class FirebaseManager {
             if (this.profileManager) {
                 await this.profileManager.handleAuthChange(user);
                 this.currentProfile = await this.profileManager.getCurrentProfile();
+                
+                // Update UI after auth change
+                if (window.profileUI) {
+                    await window.profileUI.loadProfile();
+                }
+                
+                // Sync cart after auth change
+                if (window.cartManager) {
+                    await window.cartManager.syncWithProfile();
+                    window.updateCartCount();
+                    window.updateCartDisplay();
+                }
             }
         });
     }
@@ -77,6 +91,92 @@ class FirebaseManager {
             return this.currentProfile;
         } catch (error) {
             console.error('Failed to initialize user profile:', error);
+            throw error;
+        }
+    }
+
+    // ===== AUTHENTICATION METHODS =====
+    
+    async signUpUser(email, password, additionalInfo = {}) {
+        if (!this.auth) throw new Error('Authentication not available');
+        
+        try {
+            // If user is currently a guest, use the conversion method
+            if (this.currentProfile?.type === 'guest' && this.profileManager.convertGuestToRegistered) {
+                const userInfo = {
+                    email,
+                    ...additionalInfo
+                };
+                
+                const updatedProfile = await this.profileManager.convertGuestToRegistered(userInfo, password);
+                this.currentProfile = updatedProfile;
+                
+                await this.logEvent('guest_converted_to_registered', {
+                    uid: this.auth.currentUser?.uid,
+                    email: email,
+                    converted_from_guest: true,
+                    cart_items: updatedProfile.shopping?.cart?.items?.length || 0
+                });
+                
+                return this.auth.currentUser;
+            } else {
+                // Standard signup for new users
+                const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update profile with user info
+                await this.updateProfile({
+                    personal_info: {
+                        email: user.email,
+                        ...additionalInfo
+                    }
+                });
+                
+                await this.logEvent('user_signed_up', {
+                    uid: user.uid,
+                    email: user.email,
+                    converted_from_guest: false
+                });
+                
+                return user;
+            }
+        } catch (error) {
+            console.error('Sign up failed:', error);
+            throw error;
+        }
+    }
+
+    async signInUser(email, password) {
+        if (!this.auth) throw new Error('Authentication not available');
+        
+        try {
+            const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            await this.logEvent('user_signed_in', {
+                uid: user.uid,
+                email: user.email
+            });
+            
+            return user;
+        } catch (error) {
+            console.error('Sign in failed:', error);
+            throw error;
+        }
+    }
+
+    async signOutUser() {
+        if (!this.auth) return;
+        
+        try {
+            await this.auth.signOut();
+            
+            await this.logEvent('user_signed_out', {
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            console.error('Sign out failed:', error);
             throw error;
         }
     }
@@ -156,152 +256,101 @@ class FirebaseManager {
     // ===== PRODUCT MANAGEMENT =====
     
     async getProducts() {
-    if (!this.db) {
-        console.warn('Database not available, using fallback products');
-        return this.getFallbackProducts();
-    }
-    
-    try {
-        const snapshot = await this.db.collection(this.collections.products).orderBy('created_at', 'desc').get();
-        const products = [];
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            products.push({
-                id: doc.id, // Use Firestore document ID
-                name: data.name || 'Untitled Product',
-                category: data.category || 'uncategorized',
-                price: typeof data.price === 'number' ? data.price : 0,
-                stock: typeof data.stock === 'number' && !isNaN(data.stock) ? data.stock : 0,
-                image: data.image || 'https://via.placeholder.com/600x800?text=No+Image',
-                description: data.description || 'No description available',
-                sku: data.sku || `SKU-${doc.id}`,
-                weight: data.weight || 0.5,
-                dimensions: data.dimensions || 'Standard fit',
-                created_at: data.created_at,
-                updated_at: data.updated_at
-            });
-        });
-        
-        console.log(`Loaded ${products.length} products from Firebase`);
-        return products;
-    } catch (error) {
-        console.error('Failed to load products from Firebase:', error);
-        return this.getFallbackProducts();
-    }
-}
-
-getFallbackProducts() {
-    // Minimal fallback products if Firebase fails
-    return [
-        {
-            id: 'fallback-1',
-            name: 'Sample Product',
-            category: 'boys',
-            price: 29.99,
-            stock: 5,
-            image: 'https://via.placeholder.com/600x800?text=Sample+Product',
-            description: 'Sample product for testing',
-            sku: 'SAMPLE-001',
-            weight: 0.5,
-            dimensions: 'Standard fit'
+        if (!this.db) {
+            console.warn('Database not available, using fallback products');
+            return this.getFallbackProducts();
         }
-    ];
-}
-async updateProductStock(productId, newStock, reason = 'update') {
-    if (!this.db) return;
-    
-    try {
-        const productRef = this.db.collection(this.collections.products).doc(productId.toString());
         
-        await productRef.update({
-            stock: newStock,
-            updated_at: new Date().toISOString(),
-            update_reason: reason
-        });
-        
-        // Log inventory change
-        await this.logInventoryChange(productId, newStock, reason);
-        
-        console.log(`Product stock updated: ${productId} -> ${newStock}`);
-        
-    } catch (error) {
-        console.error('Failed to update product stock:', error);
-        throw error;
+        try {
+            const snapshot = await this.db.collection(this.collections.products)
+                .orderBy('created_at', 'desc')
+                .get();
+            const products = [];
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                products.push({
+                    id: doc.id,
+                    name: data.name || 'Untitled Product',
+                    category: data.category || 'uncategorized',
+                    price: typeof data.price === 'number' ? data.price : 0,
+                    stock: typeof data.stock === 'number' && !isNaN(data.stock) ? data.stock : 0,
+                    image: data.image || 'https://via.placeholder.com/600x800?text=No+Image',
+                    description: data.description || 'No description available',
+                    sku: data.sku || `SKU-${doc.id}`,
+                    weight: data.weight || 0.5,
+                    dimensions: data.dimensions || 'Standard fit',
+                    created_at: data.created_at,
+                    updated_at: data.updated_at
+                });
+            });
+            
+            console.log(`Loaded ${products.length} products from Firebase`);
+            return products;
+        } catch (error) {
+            console.error('Failed to load products from Firebase:', error);
+            return this.getFallbackProducts();
+        }
     }
-}
 
-async logInventoryChange(productId, newStock, reason) {
-    if (!this.db) return;
-    
-    try {
-        const product = products.find(p => p.id === productId);
-        
-        await this.db.collection(this.collections.inventory).add({
-            product_id: productId,
-            product_name: product?.name || 'Unknown',
-            new_stock: newStock,
-            reason,
-            timestamp: new Date().toISOString(),
-            profile_id: this.currentProfile?.id
-        });
-    } catch (error) {
-        console.error('Failed to log inventory change:', error);
+    getFallbackProducts() {
+        return [
+            {
+                id: 'fallback-1',
+                name: 'Sample Product',
+                category: 'boys',
+                price: 29.99,
+                stock: 5,
+                image: 'https://via.placeholder.com/600x800?text=Sample+Product',
+                description: 'Sample product for testing',
+                sku: 'SAMPLE-001',
+                weight: 0.5,
+                dimensions: 'Standard fit'
+            }
+        ];
     }
-}
-// Add method to create products (for admin use)
-async createProduct(productData) {
-    if (!this.db) throw new Error('Database not available');
-    
-    try {
-        const productWithTimestamps = {
-            ...productData,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            stock: typeof productData.stock === 'number' && !isNaN(productData.stock) ? productData.stock : 0
-        };
-        
-        const docRef = await this.db.collection(this.collections.products).add(productWithTimestamps);
-        console.log('Product created with ID:', docRef.id);
-        return docRef.id;
-    } catch (error) {
-        console.error('Failed to create product:', error);
-        throw error;
-    }
-}
 
-// Add method to update product
-async updateProduct(productId, updates) {
-    if (!this.db) throw new Error('Database not available');
-    
-    try {
-        const updateData = {
-            ...updates,
-            updated_at: new Date().toISOString()
-        };
+    async updateProductStock(productId, newStock, reason = 'update') {
+        if (!this.db) return;
         
-        await this.db.collection(this.collections.products).doc(productId).update(updateData);
-        console.log('Product updated:', productId);
-        return true;
-    } catch (error) {
-        console.error('Failed to update product:', error);
-        throw error;
+        try {
+            const productRef = this.db.collection(this.collections.products).doc(productId.toString());
+            
+            await productRef.update({
+                stock: newStock,
+                updated_at: new Date().toISOString(),
+                update_reason: reason
+            });
+            
+            await this.logInventoryChange(productId, newStock, reason);
+            console.log(`Product stock updated: ${productId} -> ${newStock}`);
+            
+        } catch (error) {
+            console.error('Failed to update product stock:', error);
+            throw error;
+        }
     }
-}
 
-// Add method to delete product
-async deleteProduct(productId) {
-    if (!this.db) throw new Error('Database not available');
-    
-    try {
-        await this.db.collection(this.collections.products).doc(productId).delete();
-        console.log('Product deleted:', productId);
-        return true;
-    } catch (error) {
-        console.error('Failed to delete product:', error);
-        throw error;
+    async logInventoryChange(productId, newStock, reason) {
+        if (!this.db) return;
+        
+        try {
+            // Get current products to find product name
+            const products = await this.getProducts();
+            const product = products.find(p => p.id === productId);
+            
+            await this.db.collection(this.collections.inventory).add({
+                product_id: productId,
+                product_name: product?.name || 'Unknown',
+                new_stock: newStock,
+                reason,
+                timestamp: new Date().toISOString(),
+                profile_id: this.currentProfile?.id
+            });
+        } catch (error) {
+            console.error('Failed to log inventory change:', error);
+        }
     }
-}
 
     // ===== ORDER MANAGEMENT =====
     
@@ -321,7 +370,7 @@ async deleteProduct(productId) {
             const orderRef = await this.db.collection(this.collections.orders).add(enrichedOrderData);
             
             // Add to profile purchase history
-            if (this.profileManager) {
+            if (this.profileManager && this.profileManager.addPurchase) {
                 await this.profileManager.addPurchase({
                     order_id: orderRef.id,
                     ...enrichedOrderData
@@ -336,42 +385,593 @@ async deleteProduct(productId) {
         }
     }
 
-    // ===== ANALYTICS & EVENTS =====
+    // ===== IMPROVED ANALYTICS & EVENTS =====
     
     async logEvent(eventName, eventData = {}) {
-    try {
-        const enrichedEventData = {
-            event_name: eventName,
-            event_data: eventData,
-            timestamp: new Date().toISOString(),
-            profile_id: this.currentProfile?.id || 'anonymous',  // Fix undefined issue
-            profile_type: this.currentProfile?.type || 'unknown',
-            session_id: this.currentProfile?.session_id || 'no_session',
-            user_agent: navigator.userAgent,
-            page_url: window.location.href,
-            page_title: document.title
-        };
-        
-        // Log to profile analytics
-        if (this.profileManager) {
-            await this.profileManager.trackAction(eventName, eventData);
+        try {
+            const timestamp = new Date().toISOString();
+            const eventId = this.generateEventId();
+            
+            const enrichedEventData = {
+                id: eventId,
+                event_name: eventName,
+                event_data: eventData,
+                timestamp,
+                date: timestamp.split('T')[0], // For daily aggregations
+                profile_id: this.currentProfile?.id || 'anonymous',
+                profile_type: this.currentProfile?.type || 'unknown',
+                session_id: this.currentProfile?.session_id || 'no_session',
+                user_agent: navigator.userAgent,
+                page_url: window.location.href,
+                page_title: document.title
+            };
+            
+            // Method 1: Store in main analytics collection (for cross-user analysis)
+            if (this.db) {
+                await this.db.collection(this.collections.analytics).doc(eventId).set(enrichedEventData);
+            }
+            
+            // Method 2: Store in user-specific subcollection (for user-specific queries)
+            if (this.currentProfile?.id && this.db) {
+                await this.db
+                    .collection(this.collections.profiles)
+                    .doc(this.currentProfile.id)
+                    .collection('events')
+                    .doc(eventId)
+                    .set(enrichedEventData);
+            }
+            
+            // Method 3: Update lightweight profile summary
+            await this.updateProfileAnalyticsSummary(eventName, eventData);
+            
+            // Method 4: Update daily aggregations
+            await this.updateDailyAnalytics(eventName, eventData, timestamp);
+            
+            // Log to Firebase Analytics service (only if available)
+            if (this.analytics) {
+                this.analytics.logEvent(eventName, eventData);
+            }
+            
+        } catch (error) {
+            console.error('Failed to log event:', error);
         }
-        
-        // Log to Firebase Analytics collection
-        if (this.db) {
-            await this.db.collection(this.collections.analytics).add(enrichedEventData);
-        }
-        
-        // Log to Firebase Analytics service (only if available)
-        if (this.analytics) {
-            this.analytics.logEvent(eventName, eventData);
-        }
-        
-    } catch (error) {
-        console.error('Failed to log event:', error);
-    }
     }
 
+    // Generate unique event ID
+    generateEventId() {
+        return `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    // Update profile with lightweight analytics summary
+    async updateProfileAnalyticsSummary(eventName, eventData) {
+        if (!this.currentProfile || !this.db) return;
+        
+        try {
+            const profileRef = this.db.collection(this.collections.profiles).doc(this.currentProfile.id);
+            
+            // Use Firebase increment operations for counters
+            const updateData = {
+                'analytics.last_activity': new Date().toISOString(),
+                'analytics.total_events': firebase.firestore.FieldValue.increment(1),
+                [`analytics.event_counts.${eventName}`]: firebase.firestore.FieldValue.increment(1),
+                'updated_at': new Date().toISOString()
+            };
+            
+            // Add specific event data to summary
+            if (eventName === 'item_added_to_cart') {
+                updateData['analytics.cart_additions'] = firebase.firestore.FieldValue.increment(1);
+            } else if (eventName === 'page_view') {
+                updateData['analytics.page_views'] = firebase.firestore.FieldValue.increment(1);
+            }
+            
+            await profileRef.update(updateData);
+            
+        } catch (error) {
+            console.warn('Failed to update profile analytics summary:', error);
+        }
+    }
+
+    // Update daily analytics aggregations
+    async updateDailyAnalytics(eventName, eventData, timestamp) {
+        if (!this.db) return;
+        
+        try {
+            const dateKey = timestamp.split('T')[0]; // YYYY-MM-DD
+            const dailyRef = this.db.collection(this.collections.dailyAnalytics).doc(dateKey);
+            
+            const updateData = {
+                date: dateKey,
+                total_events: firebase.firestore.FieldValue.increment(1),
+                [`event_counts.${eventName}`]: firebase.firestore.FieldValue.increment(1),
+                unique_users: firebase.firestore.FieldValue.arrayUnion(this.currentProfile?.id || 'anonymous'),
+                last_updated: new Date().toISOString()
+            };
+            
+            await dailyRef.set(updateData, { merge: true });
+            
+        } catch (error) {
+            console.warn('Failed to update daily analytics:', error);
+        }
+    }
+
+    // ===== ANALYTICS QUERY METHODS =====
+    
+    // Get user events (readable, paginated)
+    async getUserEvents(userId, options = {}) {
+        if (!this.db) return [];
+        
+        const {
+            limit = 50,
+            startAfter = null,
+            eventType = null,
+            startDate = null,
+            endDate = null
+        } = options;
+        
+        try {
+            let query = this.db
+                .collection(this.collections.profiles)
+                .doc(userId)
+                .collection('events')
+                .orderBy('timestamp', 'desc')
+                .limit(limit);
+            
+            if (startAfter) {
+                query = query.startAfter(startAfter);
+            }
+            
+            if (eventType) {
+                query = query.where('event_name', '==', eventType);
+            }
+            
+            if (startDate) {
+                query = query.where('timestamp', '>=', startDate);
+            }
+            
+            if (endDate) {
+                query = query.where('timestamp', '<=', endDate);
+            }
+            
+            const snapshot = await query.get();
+            const events = [];
+            
+            snapshot.forEach(doc => {
+                events.push(doc.data());
+            });
+            
+            return events;
+            
+        } catch (error) {
+            console.error('Failed to get user events:', error);
+            return [];
+        }
+    }
+
+    // Get daily analytics summary
+    async getDailyAnalytics(startDate, endDate) {
+        if (!this.db) return [];
+        
+        try {
+            const snapshot = await this.db
+                .collection(this.collections.dailyAnalytics)
+                .where('date', '>=', startDate)
+                .where('date', '<=', endDate)
+                .orderBy('date', 'desc')
+                .get();
+            
+            const dailyData = [];
+            snapshot.forEach(doc => {
+                dailyData.push(doc.data());
+            });
+            
+            return dailyData;
+            
+        } catch (error) {
+            console.error('Failed to get daily analytics:', error);
+            return [];
+        }
+    }
+
+    // Get events by type across all users
+    async getEventsByType(eventType, options = {}) {
+        if (!this.db) return [];
+        
+        const {
+            limit = 100,
+            startDate = null,
+            endDate = null
+        } = options;
+        
+        try {
+            let query = this.db
+                .collection(this.collections.analytics)
+                .where('event_name', '==', eventType)
+                .orderBy('timestamp', 'desc')
+                .limit(limit);
+            
+            if (startDate) {
+                query = query.where('timestamp', '>=', startDate);
+            }
+            
+            if (endDate) {
+                query = query.where('timestamp', '<=', endDate);
+            }
+            
+            const snapshot = await query.get();
+            const events = [];
+            
+            snapshot.forEach(doc => {
+                events.push(doc.data());
+            });
+            
+            return events;
+            
+        } catch (error) {
+            console.error('Failed to get events by type:', error);
+            return [];
+        }
+    }
+
+    // Get user analytics dashboard data
+    async getUserAnalyticsDashboard(userId) {
+        if (!this.db) return null;
+        
+        try {
+            // Get user profile with analytics summary
+            const profileDoc = await this.db.collection(this.collections.profiles).doc(userId).get();
+            
+            if (!profileDoc.exists) {
+                return null;
+            }
+            
+            const profileData = profileDoc.data();
+            const analytics = profileData.analytics || {};
+            
+            // Get recent events
+            const recentEvents = await this.getUserEvents(userId, { limit: 10 });
+            
+            return {
+                user_id: userId,
+                summary: {
+                    total_events: analytics.total_events || 0,
+                    page_views: analytics.page_views || 0,
+                    cart_additions: analytics.cart_additions || 0,
+                    last_activity: analytics.last_activity,
+                    event_counts: analytics.event_counts || {}
+                },
+                recent_events: recentEvents,
+                profile_type: profileData.type,
+                member_since: profileData.created_at
+            };
+            
+        } catch (error) {
+            console.error('Failed to get user analytics dashboard:', error);
+            return null;
+        }
+    }
+
+    // ===== ANALYTICS REPORTING =====
+    
+    async generateAnalyticsReport(startDate, endDate) {
+        if (!this.db) return null;
+        
+        try {
+            // Get daily analytics
+            const dailyData = await this.getDailyAnalytics(startDate, endDate);
+            
+            // Calculate totals
+            const totals = dailyData.reduce((acc, day) => {
+                acc.total_events += day.total_events || 0;
+                // Fixed: Use Set to count unique users properly
+                if (day.unique_users && Array.isArray(day.unique_users)) {
+                    day.unique_users.forEach(userId => acc.unique_users_set.add(userId));
+                }
+                
+                // Merge event counts
+                Object.entries(day.event_counts || {}).forEach(([event, count]) => {
+                    acc.event_counts[event] = (acc.event_counts[event] || 0) + count;
+                });
+                
+                return acc;
+            }, {
+                total_events: 0,
+                unique_users_set: new Set(),
+                event_counts: {}
+            });
+            
+            // Convert Set to count
+            totals.unique_users = totals.unique_users_set.size;
+            delete totals.unique_users_set;
+            
+            // Get top events
+            const topEvents = Object.entries(totals.event_counts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10)
+                .map(([name, count]) => ({ event_name: name, count }));
+            
+            return {
+                period: { start_date: startDate, end_date: endDate },
+                totals,
+                top_events: topEvents,
+                daily_breakdown: dailyData,
+                generated_at: new Date().toISOString()
+            };
+            
+        } catch (error) {
+            console.error('Failed to generate analytics report:', error);
+            return null;
+        }
+    }
+
+    // ===== SIMPLE ANALYTICS DASHBOARD METHODS =====
+
+    // Get current user's readable activity summary
+    async getMyActivity() {
+        if (!this.currentProfile?.id) {
+            console.log('No current user profile');
+            return null;
+        }
+        
+        const dashboard = await this.getUserAnalyticsDashboard(this.currentProfile.id);
+        
+        if (!dashboard) {
+            console.log('No dashboard data available');
+            return null;
+        }
+        
+        console.log('=== MY ACTIVITY SUMMARY ===');
+        console.log(`Profile Type: ${dashboard.profile_type}`);
+        console.log(`Member Since: ${new Date(dashboard.member_since).toLocaleDateString()}`);
+        console.log(`Total Events: ${dashboard.summary.total_events}`);
+        console.log(`Page Views: ${dashboard.summary.page_views}`);
+        console.log(`Cart Additions: ${dashboard.summary.cart_additions}`);
+        console.log(`Last Activity: ${new Date(dashboard.summary.last_activity).toLocaleString()}`);
+        
+        console.log('\n=== EVENT BREAKDOWN ===');
+        Object.entries(dashboard.summary.event_counts).forEach(([event, count]) => {
+            console.log(`${event}: ${count}`);
+        });
+        
+        console.log('\n=== RECENT EVENTS ===');
+        dashboard.recent_events.slice(0, 5).forEach((event, index) => {
+            console.log(`${index + 1}. ${event.event_name} - ${new Date(event.timestamp).toLocaleString()}`);
+        });
+        
+        return dashboard;
+    }
+
+    // Get today's website activity
+    async getTodaysActivity() {
+        const today = new Date().toISOString().split('T')[0];
+        const dailyData = await this.getDailyAnalytics(today, today);
+        
+        if (dailyData.length === 0) {
+            console.log('No activity recorded for today');
+            return null;
+        }
+        
+        const todayData = dailyData[0];
+        
+        console.log('=== TODAY\'S WEBSITE ACTIVITY ===');
+        console.log(`Date: ${todayData.date}`);
+        console.log(`Total Events: ${todayData.total_events}`);
+        console.log(`Unique Users: ${todayData.unique_users ? todayData.unique_users.length : 0}`);
+        
+        console.log('\n=== TODAY\'S EVENT BREAKDOWN ===');
+        Object.entries(todayData.event_counts || {}).forEach(([event, count]) => {
+            console.log(`${event}: ${count}`);
+        });
+        
+        return todayData;
+    }
+
+    // Get this week's summary
+    async getWeeklySummary() {
+        const today = new Date();
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        
+        const startDate = weekAgo.toISOString().split('T')[0];
+        const endDate = today.toISOString().split('T')[0];
+        
+        const report = await this.generateAnalyticsReport(startDate, endDate);
+        
+        if (!report) {
+            console.log('No weekly data available');
+            return null;
+        }
+        
+        console.log('=== WEEKLY SUMMARY ===');
+        console.log(`Period: ${startDate} to ${endDate}`);
+        console.log(`Total Events: ${report.totals.total_events}`);
+        console.log(`Unique Users: ${report.totals.unique_users}`);
+        
+        console.log('\n=== TOP EVENTS THIS WEEK ===');
+        report.top_events.slice(0, 5).forEach((event, index) => {
+            console.log(`${index + 1}. ${event.event_name}: ${event.count}`);
+        });
+        
+        console.log('\n=== DAILY BREAKDOWN ===');
+        report.daily_breakdown.forEach(day => {
+            console.log(`${day.date}: ${day.total_events} events, ${day.unique_users ? day.unique_users.length : 0} users`);
+        });
+        
+        return report;
+    }
+
+    // Get specific event history
+    async getEventHistory(eventType, limit = 20) {
+        const events = await this.getEventsByType(eventType, { limit });
+        
+        console.log(`=== ${eventType.toUpperCase()} HISTORY ===`);
+        console.log(`Found ${events.length} events`);
+        
+        events.forEach((event, index) => {
+            const time = new Date(event.timestamp).toLocaleString();
+            const user = event.profile_type === 'guest' ? 'Guest' : 'Registered User';
+            console.log(`${index + 1}. ${time} - ${user} (${event.profile_id})`);
+            
+            // Show specific data for different event types
+            if (eventType === 'item_added_to_cart' && event.event_data.product) {
+                console.log(`   Product: ${event.event_data.product.name} - $${event.event_data.product.price}`);
+            }
+        });
+        
+        return events;
+    }
+
+    // Search events by user email or name
+    async searchUserEvents(searchTerm) {
+        if (!this.db) return [];
+        
+        try {
+            // First find users matching the search term
+            const usersSnapshot = await this.db.collection(this.collections.profiles)
+                .where('personal_info.email', '>=', searchTerm)
+                .where('personal_info.email', '<=', searchTerm + '\uf8ff')
+                .get();
+            
+            const results = [];
+            
+            for (const userDoc of usersSnapshot.docs) {
+                const userData = userDoc.data();
+                const userId = userDoc.id;
+                
+                // Get recent events for this user
+                const userEvents = await this.getUserEvents(userId, { limit: 10 });
+                
+                results.push({
+                    user: {
+                        id: userId,
+                        email: userData.personal_info?.email,
+                        name: userData.personal_info?.name,
+                        type: userData.type
+                    },
+                    events: userEvents
+                });
+            }
+            
+            console.log(`=== USER SEARCH RESULTS FOR "${searchTerm}" ===`);
+            results.forEach((result, index) => {
+                console.log(`${index + 1}. ${result.user.name || 'No name'} (${result.user.email})`);
+                console.log(`   User Type: ${result.user.type}`);
+                console.log(`   Recent Events: ${result.events.length}`);
+                
+                result.events.slice(0, 3).forEach(event => {
+                    console.log(`   - ${event.event_name} (${new Date(event.timestamp).toLocaleString()})`);
+                });
+                console.log('');
+            });
+            
+            return results;
+            
+        } catch (error) {
+            console.error('Failed to search user events:', error);
+            return [];
+        }
+    }
+
+    // Quick analytics console commands
+    setupAnalyticsConsole() {
+        // Add these to the global window object for easy console access
+        window.analytics = {
+            // My activity
+            my: () => this.getMyActivity(),
+            
+            // Today's activity  
+            today: () => this.getTodaysActivity(),
+            
+            // This week's summary
+            week: () => this.getWeeklySummary(),
+            
+            // Event histories
+            signups: () => this.getEventHistory('guest_converted_to_registered', 10),
+            carts: () => this.getEventHistory('item_added_to_cart', 20),
+            pageViews: () => this.getEventHistory('page_view', 15),
+            logins: () => this.getEventHistory('user_signed_in', 10),
+            
+            // Search users
+            search: (term) => this.searchUserEvents(term),
+            
+            // Custom event history
+            events: (eventType, limit = 20) => this.getEventHistory(eventType, limit),
+            
+            // Custom date range
+            range: (startDate, endDate) => this.generateAnalyticsReport(startDate, endDate),
+            
+            // Help
+            help: () => {
+                console.log('=== ANALYTICS CONSOLE COMMANDS ===');
+                console.log('analytics.my() - My activity summary');
+                console.log('analytics.today() - Today\'s website activity');
+                console.log('analytics.week() - This week\'s summary');
+                console.log('analytics.signups() - Recent user signups');
+                console.log('analytics.carts() - Recent cart additions');
+                console.log('analytics.pageViews() - Recent page views');
+                console.log('analytics.logins() - Recent logins');
+                console.log('analytics.search("email") - Search user by email');
+                console.log('analytics.events("event_name", 20) - Get event history');
+                console.log('analytics.range("2025-01-01", "2025-01-07") - Custom date range');
+                console.log('analytics.help() - Show this help');
+            }
+        };
+        
+        console.log('Analytics console ready! Type analytics.help() for commands');
+    }
+
+    // ===== UTILITY METHODS =====
+    
+    // Clean up old events (run periodically to manage storage)
+    async cleanupOldEvents(daysToKeep = 90) {
+        if (!this.db) return;
+        
+        try {
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+            const cutoffTimestamp = cutoffDate.toISOString();
+            
+            // Clean up main analytics collection
+            const oldEventsSnapshot = await this.db
+                .collection(this.collections.analytics)
+                .where('timestamp', '<', cutoffTimestamp)
+                .limit(500) // Process in batches
+                .get();
+            
+            const batch = this.db.batch();
+            oldEventsSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            await batch.commit();
+            
+            console.log(`Cleaned up ${oldEventsSnapshot.size} old events`);
+            
+        } catch (error) {
+            console.error('Failed to cleanup old events:', error);
+        }
+    }
+
+    // Export user data for GDPR compliance
+    async exportUserAnalytics(userId) {
+        try {
+            const dashboard = await this.getUserAnalyticsDashboard(userId);
+            const allEvents = await this.getUserEvents(userId, { limit: 1000 });
+            
+            return {
+                user_id: userId,
+                dashboard_summary: dashboard,
+                all_events: allEvents,
+                export_timestamp: new Date().toISOString()
+            };
+            
+        } catch (error) {
+            console.error('Failed to export user analytics:', error);
+            return null;
+        }
+    }
+
+    // ===== CUSTOMER BEHAVIOR TRACKING =====
+    
     async trackCustomerBehavior(category, action, data = {}) {
         const behaviorData = {
             category,
@@ -501,70 +1101,6 @@ async deleteProduct(productId) {
         } catch (error) {
             console.error('Failed to get inventory alerts:', error);
             return [];
-        }
-    }
-
-    // ===== USER AUTHENTICATION (Future Enhancement) =====
-    
-    async signUpUser(email, password, additionalInfo = {}) {
-        if (!this.auth) throw new Error('Authentication not available');
-        
-        try {
-            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-            
-            // Update profile with user info
-            await this.updateProfile({
-                personal_info: {
-                    email: user.email,
-                    ...additionalInfo
-                }
-            });
-            
-            await this.logEvent('user_signed_up', {
-                uid: user.uid,
-                email: user.email
-            });
-            
-            return user;
-        } catch (error) {
-            console.error('Sign up failed:', error);
-            throw error;
-        }
-    }
-
-    async signInUser(email, password) {
-        if (!this.auth) throw new Error('Authentication not available');
-        
-        try {
-            const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-            
-            await this.logEvent('user_signed_in', {
-                uid: user.uid,
-                email: user.email
-            });
-            
-            return user;
-        } catch (error) {
-            console.error('Sign in failed:', error);
-            throw error;
-        }
-    }
-
-    async signOutUser() {
-        if (!this.auth) return;
-        
-        try {
-            await this.auth.signOut();
-            
-            await this.logEvent('user_signed_out', {
-                timestamp: new Date().toISOString()
-            });
-            
-        } catch (error) {
-            console.error('Sign out failed:', error);
-            throw error;
         }
     }
 
