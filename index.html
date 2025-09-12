@@ -816,7 +816,131 @@ box-shadow:
             </div>
         </div>
     </section>
-
+<!-- Product Detail Modal Structure -->
+<div class="product-detail-modal" id="productDetailModal">
+    <div class="product-detail-content" onclick="event.stopPropagation()">
+        <div class="product-detail-header">
+            <div class="header-left">
+                <span class="product-breadcrumb" id="productBreadcrumb">Loading...</span>
+            </div>
+            
+            <!-- Centered In-Cart Indicator -->
+            <div id="inCartIndicator" class="in-cart-indicator-header" style="display: none;">
+                <div class="in-cart-info">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                    <span id="inCartText">1 in cart</span>
+                </div>
+            </div>
+            
+            <button class="product-detail-close" onclick="closeProductDetail()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="product-detail-body">
+            <!-- Left Column - Image -->
+            <div class="product-image-section">
+                <div class="product-detail-image-container">
+                    <img id="productDetailImage" class="product-detail-image" src="" alt="">
+                    <div id="productDetailStockBadge" class="product-detail-stock-badge"></div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Product Info -->
+            <div class="product-info-section">
+                <h1 id="productDetailTitle" class="product-detail-title"></h1>
+                <div id="productDetailPrice" class="product-detail-price"></div>
+                <div id="productDetailSku" class="product-sku-detail"></div>
+                
+                <div class="product-section">
+                    <h3 class="product-section-title">Description</h3>
+                    <p id="productDetailDescription" class="product-description"></p>
+                </div>
+                
+                <div id="sizeSection" class="product-section" style="display: none;">
+                    <h3 class="product-section-title">Size</h3>
+                    <div id="sizeSelection" class="size-selection"></div>
+                </div>
+                
+                <div class="product-section">
+                    <h3 class="product-section-title">Quantity</h3>
+                    <div class="quantity-selector">
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateDetailQuantity(-1)">−</button>
+                            <div id="quantityDisplay" class="quantity-display">1</div>
+                            <button class="quantity-btn" onclick="updateDetailQuantity(1)">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-section">
+                    <h3 class="product-section-title">Features</h3>
+                    <ul class="features-list">
+                        <li>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Premium quality materials
+                        </li>
+                        <li>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Comfortable fit
+                        </li>
+                        <li>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Easy care instructions
+                        </li>
+                        <li>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Durable construction
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="product-section">
+                    <h3 class="product-section-title">Product Details</h3>
+                    <div class="product-details-grid">
+                        <div class="detail-row">
+                            <span class="detail-label">Material:</span>
+                            <span class="detail-value">Premium Cotton Blend</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Care:</span>
+                            <span class="detail-value">Machine wash cold</span>
+                        </div>
+                        <div id="weightRow" class="detail-row" style="display: none;">
+                            <span class="detail-label">Weight:</span>
+                            <span id="productWeight" class="detail-value"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-actions">
+            <!-- Action Buttons -->
+            <div id="actionsRow" class="actions-row">
+                <button id="addToCartBtn" class="primary-action-btn" onclick="addToCartFromDetail()">
+                    Add to Cart
+                </button>
+                <button id="wishlistBtn" class="secondary-action-btn" onclick="toggleWishlistFromDetail()">
+                    <span id="wishlistIcon">♡</span> <span id="wishlistText">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- Cart Sidebar -->
     <div class="cart-sidebar" id="cartSidebar">
         <div class="cart-header">

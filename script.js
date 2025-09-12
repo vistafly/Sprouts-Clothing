@@ -13,7 +13,10 @@ let stripe = null;
 let firebaseManager = null;
 let profileUI = null;
 let products = []; // This will be populated from Firebase
-
+let currentDetailProduct = null;
+        let selectedSize = '';
+        let detailQuantity = 1;
+        let isInWishlist = false;
 // ===== PROFILE-AWARE CART MANAGEMENT =====
 class ProfileAwareCartManager {
     constructor(firebaseManager) {
@@ -463,16 +466,11 @@ function createProductCard(product) {
     `;
 
     card.addEventListener('click', async (e) => {
-        if (!e.target.closest('.quick-add-btn') && !e.target.closest('.wishlist-btn')) {
-            if (firebaseManager) {
-                await firebaseManager.trackProductView(product.id, {
-                    name: product.name,
-                    category: product.category,
-                    price: product.price
-                });
-            }
-        }
-    });
+    if (!e.target.closest('.quick-add-btn') && !e.target.closest('.wishlist-btn')) {
+        // Show product detail modal
+        showProductDetail(product.id);
+    }
+});
     
     return card;
 }
@@ -959,6 +957,13 @@ function handleKeyboardShortcuts(e) {
         if (profileUI && document.getElementById('signupPromptModal')?.classList.contains('show')) {
             profileUI.closeSignupPrompt();
         }
+        if (mobileMenuInstance && mobileMenuInstance.getIsOpen()) {
+            mobileMenuInstance.close();
+        }
+        // Add this line:
+        if (document.getElementById('productDetailModal')?.classList.contains('show')) {
+            closeProductDetail();
+        }
     }
 }
 
@@ -1359,6 +1364,420 @@ function setupNavigationRouting() {
         });
     });
 }
+ // Product Detail Modal Implementation
+        
+
+        // Integration functions (to be called from your existing code)
+        function showProductDetail(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                console.error('Product not found:', productId);
+                return;
+            }
+            
+            currentDetailProduct = product;
+            populateProductDetail(product);
+            
+            const modal = document.getElementById('productDetailModal');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Track product view
+            if (firebaseManager) {
+                firebaseManager.trackProductView(productId, {
+                    name: product.name,
+                    category: product.category,
+                    price: product.price,
+                    view_source: 'detail_modal'
+                });
+            }
+        }
+
+        function closeProductDetail() {
+            const modal = document.getElementById('productDetailModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            
+            // Reset state
+            currentDetailProduct = null;
+            selectedSize = '';
+            detailQuantity = 1;
+            isInWishlist = false;
+        }
+
+        function populateProductDetail(product) {
+            // Basic product info
+            document.getElementById('productBreadcrumb').textContent = getCategoryDisplayName(product.category);
+            document.getElementById('productDetailTitle').textContent = product.name;
+            document.getElementById('productDetailPrice').textContent = `${product.price.toFixed(2)}`;
+            document.getElementById('productDetailImage').src = product.image;
+            document.getElementById('productDetailImage').alt = product.name;
+            
+            // SKU
+            const skuElement = document.getElementById('productDetailSku');
+            if (product.sku) {
+                skuElement.textContent = `SKU: ${product.sku}`;
+                skuElement.style.display = 'block';
+            } else {
+                skuElement.style.display = 'none';
+            }
+            
+            // Description
+            document.getElementById('productDetailDescription').textContent = 
+                product.description || 'High-quality product crafted with attention to detail and comfort.';
+            
+            // Stock status
+            updateStockBadge(product);
+            
+            // Size selection (only for clothing)
+            const sizeSection = document.getElementById('sizeSection');
+            if (product.category !== 'women') {
+                sizeSection.style.display = 'block';
+                populateSizeSelection();
+            } else {
+                sizeSection.style.display = 'none';
+            }
+            
+            // Weight info
+            const weightRow = document.getElementById('weightRow');
+            if (product.weight) {
+                document.getElementById('productWeight').textContent = `${product.weight} lbs`;
+                weightRow.style.display = 'flex';
+            } else {
+                weightRow.style.display = 'none';
+            }
+            
+            // Reset quantity
+            detailQuantity = 1;
+            document.getElementById('quantityDisplay').textContent = '1';
+            
+            // Check wishlist status
+            checkWishlistStatus(product);
+            
+            // Update cart status
+            updateCartStatus(product);
+        }
+
+        async function checkWishlistStatus(product) {
+    if (!firebaseManager || !firebaseManager.currentProfile) {
+        isInWishlist = false;
+        updateWishlistButton();
+        return;
+    }
+    
+    try {
+        const profile = firebaseManager.currentProfile;
+        const wishlist = profile.shopping?.wishlist || [];
+        isInWishlist = wishlist.some(item => item.product_id === product.id);
+        updateWishlistButton();
+    } catch (error) {
+        console.error('Error checking wishlist status:', error);
+        isInWishlist = false;
+        updateWishlistButton();
+    }
+}
+
+function updateWishlistButton() {
+    const wishlistBtn = document.getElementById('wishlistBtn');
+    const wishlistIcon = document.getElementById('wishlistIcon');
+    const wishlistText = document.getElementById('wishlistText');
+    
+    // Add null checks to prevent errors when modal isn't open
+    if (!wishlistBtn || !wishlistIcon || !wishlistText) {
+        return;
+    }
+    
+    if (isInWishlist) {
+        wishlistBtn.classList.add('saved');
+        wishlistIcon.textContent = '♥';
+        wishlistText.textContent = 'Saved';
+    } else {
+        wishlistBtn.classList.remove('saved');
+        wishlistIcon.textContent = '♡';
+        wishlistText.textContent = 'Save';
+    }
+}
+
+        function updateStockBadge(product) {
+            const badge = document.getElementById('productDetailStockBadge');
+            const stockInfo = getStockInfo(product);
+            
+            badge.textContent = stockInfo.text;
+            badge.className = `product-detail-stock-badge stock-${stockInfo.status}`;
+        }
+
+        function getStockInfo(product) {
+            if (product.preorder && product.stock === 0) {
+                return { text: 'Preorder', status: 'preorder' };
+            } else if (product.stock === 0) {
+                return { text: 'Sold Out', status: 'out-of-stock' };
+            } else if (product.stock <= 5) {
+                return { text: `Only ${product.stock} left`, status: 'low-stock' };
+            } else {
+                return { text: 'In Stock', status: 'in-stock' };
+            }
+        }
+
+        function populateSizeSelection() {
+            const sizes = ['XS', 'S', 'M', 'L', 'XL'];
+            const container = document.getElementById('sizeSelection');
+            container.innerHTML = '';
+            
+            sizes.forEach(size => {
+                const sizeButton = document.createElement('button');
+                sizeButton.className = 'size-option';
+                sizeButton.textContent = size;
+                sizeButton.onclick = () => selectSize(size);
+                container.appendChild(sizeButton);
+            });
+            
+            // Select first size by default
+            selectedSize = sizes[0];
+            container.firstChild.classList.add('selected');
+        }
+
+        function selectSize(size) {
+            selectedSize = size;
+            
+            // Update UI
+            const sizeButtons = document.querySelectorAll('.size-option');
+            sizeButtons.forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        function updateDetailQuantity(change) {
+            if (!currentDetailProduct) return;
+            
+            const newQuantity = Math.max(1, Math.min(currentDetailProduct.stock, detailQuantity + change));
+            detailQuantity = newQuantity;
+            document.getElementById('quantityDisplay').textContent = newQuantity;
+        }
+
+        function updateCartStatus(product) {
+    if (!cartManager) return;
+    
+    try {
+        const cartItem = cartManager.getCart().find(item => item.id === product.id);
+        const inCartIndicator = document.getElementById('inCartIndicator');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const actionsRow = document.getElementById('actionsRow');
+        
+        // Add null checks for all DOM elements
+        if (!inCartIndicator || !addToCartBtn || !actionsRow) {
+            console.warn('Product detail modal elements not found');
+            return;
+        }
+        
+        if (cartItem) {
+            // Show in cart indicator
+            inCartIndicator.style.display = 'flex';
+            const inCartText = document.getElementById('inCartText');
+            if (inCartText) {
+                inCartText.textContent = `${cartItem.quantity} in cart`;
+            }
+            
+            // Update actions row to three-button layout
+            actionsRow.className = 'actions-row three-buttons';
+            
+            // Update primary button to "Update Cart"
+            addToCartBtn.textContent = 'Update Cart';
+            addToCartBtn.disabled = false;
+            
+            // Add View Cart button if it doesn't exist
+            let viewCartBtn = document.getElementById('viewCartBtn');
+            if (!viewCartBtn) {
+                viewCartBtn = document.createElement('button');
+                viewCartBtn.id = 'viewCartBtn';
+                viewCartBtn.className = 'secondary-action-btn';
+                viewCartBtn.onclick = () => {
+                    if (window.openCart) openCart();
+                    closeProductDetail();
+                };
+                viewCartBtn.textContent = 'View Cart';
+                
+                // Insert as the second button (between Add to Cart and Wishlist)
+                const wishlistBtn = document.getElementById('wishlistBtn');
+                if (wishlistBtn) {
+                    actionsRow.insertBefore(viewCartBtn, wishlistBtn);
+                }
+            }
+            
+        } else {
+            // Hide in cart indicator
+            inCartIndicator.style.display = 'none';
+            
+            // Remove View Cart button if it exists
+            const viewCartBtn = document.getElementById('viewCartBtn');
+            if (viewCartBtn) {
+                viewCartBtn.remove();
+            }
+            
+            // Update actions row to two-button layout
+            actionsRow.className = 'actions-row two-buttons';
+            
+            // Update primary button based on stock
+            const stockInfo = getStockInfo(product);
+            if (stockInfo.status === 'out-of-stock' && !product.preorder) {
+                addToCartBtn.textContent = 'Out of Stock';
+                addToCartBtn.disabled = true;
+            } else if (product.preorder) {
+                addToCartBtn.textContent = 'Preorder Now';
+                addToCartBtn.disabled = false;
+            } else {
+                addToCartBtn.textContent = 'Add to Cart';
+                addToCartBtn.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error('Error in updateCartStatus:', error);
+    }
+}
+
+        async function addToCartFromDetail() {
+            if (!currentDetailProduct || !cartManager) return;
+            
+            const stockInfo = getStockInfo(currentDetailProduct);
+            if (stockInfo.status === 'out-of-stock' && !currentDetailProduct.preorder) return;
+            
+            try {
+                const btn = document.getElementById('addToCartBtn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Adding...';
+                btn.disabled = true;
+                
+                // Add to cart with selected options
+                const success = await cartManager.addToCart(currentDetailProduct.id, detailQuantity);
+                
+                if (success) {
+                    // Update inventory if not preorder
+                    if (!currentDetailProduct.preorder && inventoryManager) {
+                        await inventoryManager.updateStock(currentDetailProduct.id, detailQuantity);
+                        currentDetailProduct.stock -= detailQuantity;
+                        updateStockBadge(currentDetailProduct);
+                    }
+                    
+                    // Track event
+                    if (firebaseManager) {
+                        await firebaseManager.logEvent('item_added_to_cart_detail', {
+                            product: {
+                                id: currentDetailProduct.id,
+                                name: currentDetailProduct.name,
+                                price: currentDetailProduct.price,
+                                category: currentDetailProduct.category
+                            },
+                            quantity: detailQuantity,
+                            selected_size: selectedSize,
+                            cart_total_items: cartManager.getCartCount(),
+                            cart_total_value: cartManager.getCartTotal()
+                        });
+                    }
+                    
+                    // Update UI
+                    if (window.updateCartCount) updateCartCount();
+                    if (window.updateCartDisplay) updateCartDisplay();
+                    updateCartStatus(currentDetailProduct);
+                    
+                    // Show success feedback
+                    btn.style.background = '#10b981';
+                    btn.textContent = 'Added!';
+                    
+                    if (window.showNotification) {
+                        showNotification(`${currentDetailProduct.name} added to cart`);
+                    }
+                    
+                    // Reset button after delay
+                    setTimeout(() => {
+                        btn.style.background = '';
+                        updateCartStatus(currentDetailProduct);
+                    }, 1500);
+                    
+                } else {
+                    throw new Error('Failed to add to cart');
+                }
+                
+            } catch (error) {
+                console.error('Failed to add to cart from detail:', error);
+                if (window.showNotification) {
+                    showNotification('Failed to add item to cart', 'error');
+                }
+                
+                const btn = document.getElementById('addToCartBtn');
+                btn.textContent = 'Add to Cart';
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleWishlistFromDetail() {
+            if (!currentDetailProduct || !firebaseManager) return;
+            
+            try {
+                const btn = document.getElementById('wishlistBtn');
+                const originalBg = btn.style.background;
+                
+                if (isInWishlist) {
+                    // Remove from wishlist
+                    await firebaseManager.removeFromWishlist(currentDetailProduct.id);
+                    isInWishlist = false;
+                    
+                    if (window.showNotification) {
+                        showNotification(`${currentDetailProduct.name} removed from wishlist`);
+                    }
+                    
+                    // Visual feedback for removal
+                    btn.style.background = '#6b7280';
+                    setTimeout(() => {
+                        btn.style.background = originalBg;
+                        updateWishlistButton();
+                    }, 1000);
+                    
+                } else {
+                    // Add to wishlist
+                    await firebaseManager.addToWishlist(currentDetailProduct.id, {
+                        name: currentDetailProduct.name,
+                        price: currentDetailProduct.price,
+                        category: currentDetailProduct.category,
+                        image: currentDetailProduct.image,
+                        selected_size: selectedSize
+                    });
+                    isInWishlist = true;
+                    
+                    if (window.showNotification) {
+                        showNotification(`${currentDetailProduct.name} added to wishlist`);
+                    }
+                    
+                    // Visual feedback for addition
+                    btn.style.background = '#ef4444';
+                    setTimeout(() => {
+                        btn.style.background = originalBg;
+                        updateWishlistButton();
+                    }, 1000);
+                }
+                
+            } catch (error) {
+                console.error('Failed to toggle wishlist:', error);
+                if (window.showNotification) {
+                    showNotification('Failed to update wishlist', 'error');
+                }
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('productDetailModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeProductDetail();
+            }
+        });
+
+        // Close modal with escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('productDetailModal').classList.contains('show')) {
+                closeProductDetail();
+            }
+        });
+
+        // Make functions globally available
+        window.showProductDetail = showProductDetail;
+        window.closeProductDetail = closeProductDetail;
 
 // Add this line to your initializeApp() function after setupEventListeners():
 // setupNavigationRouting();
