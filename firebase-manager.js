@@ -22,18 +22,20 @@ class FirebaseManager {
 
     async initialize() {
         try {
+            console.log('Initializing Firebase...');
+            
             // Initialize Firebase
             this.app = firebase.initializeApp(FIREBASE_CONFIG);
             this.db = firebase.firestore();
             this.auth = firebase.auth();
             
-            // Only initialize Analytics in production or if explicitly needed
+            // Only initialize Analytics in production
             try {
                 if (firebase.analytics && !window.location.hostname.includes('localhost')) {
                     this.analytics = firebase.analytics();
                 }
             } catch (analyticsError) {
-                console.warn('Analytics not available (this is normal for local development):', analyticsError.message);
+                console.warn('Analytics not available:', analyticsError.message);
             }
             
             // Initialize Profile Manager
@@ -42,23 +44,64 @@ class FirebaseManager {
             // Set up auth state listener
             this.setupAuthStateListener();
             
-            // Initialize user profile
-            await this.initializeUserProfile();
+            console.log('Firebase core initialized, waiting for auth state...');
             
-            // Setup analytics console for easy debugging
+            // CRITICAL FIX: Wait for initial auth state to be determined
+            await this.waitForInitialAuthState();
+            
+            console.log('Auth state determined, initializing profile...');
+            
+            // Initialize user profile and wait for it to complete
+            this.currentProfile = await this.profileManager.initializeProfile();
+            
+            if (!this.currentProfile) {
+                throw new Error('Profile initialization failed - no profile returned');
+            }
+            
+            console.log('Profile initialized successfully:', this.currentProfile.type, this.currentProfile.id);
+            
+            // Setup analytics console
             this.setupAnalyticsConsole();
             
             this.isInitialized = true;
-            console.log('Firebase Manager initialized successfully');
+            console.log('Firebase Manager fully initialized');
             
             return this;
         } catch (error) {
             console.error('Firebase initialization failed:', error);
+            this.isInitialized = false;
+            
             // Fallback to offline profile manager
-            this.profileManager = new OfflineProfileManager();
-            await this.initializeUserProfile();
+            try {
+                console.log('Falling back to offline profile manager...');
+                this.profileManager = new OfflineProfileManager();
+                this.currentProfile = await this.profileManager.initializeProfile();
+                console.log('Offline profile manager initialized');
+            } catch (offlineError) {
+                console.error('Offline profile manager also failed:', offlineError);
+            }
+            
             throw error;
         }
+    }
+
+    // NEW METHOD: Wait for initial auth state to be determined
+    waitForInitialAuthState() {
+        return new Promise((resolve) => {
+            // Set a timeout to avoid waiting forever
+            const timeout = setTimeout(() => {
+                console.warn('Auth state determination timed out, proceeding as anonymous');
+                unsubscribe();
+                resolve(null);
+            }, 5000);
+
+            const unsubscribe = this.auth.onAuthStateChanged((user) => {
+                clearTimeout(timeout);
+                console.log('Initial auth state determined:', user ? `logged in as ${user.email}` : 'anonymous user');
+                unsubscribe(); // Only listen for the first auth state change
+                resolve(user);
+            });
+        });
     }
 
     setupAuthStateListener() {
@@ -66,19 +109,25 @@ class FirebaseManager {
             console.log('Auth state changed:', user ? 'User logged in' : 'User logged out');
             
             if (this.profileManager) {
-                await this.profileManager.handleAuthChange(user);
-                this.currentProfile = await this.profileManager.getCurrentProfile();
-                
-                // Update UI after auth change
-                if (window.profileUI) {
-                    await window.profileUI.loadProfile();
-                }
-                
-                // Sync cart after auth change
-                if (window.cartManager) {
-                    await window.cartManager.syncWithProfile();
-                    window.updateCartCount();
-                    window.updateCartDisplay();
+                try {
+                    await this.profileManager.handleAuthChange(user);
+                    this.currentProfile = await this.profileManager.getCurrentProfile();
+                    
+                    // Update UI after auth change
+                    if (window.profileUI && window.profileUI.loadProfile) {
+                        await window.profileUI.loadProfile();
+                    }
+                    
+                    // Sync cart after auth change
+                    if (window.cartManager && window.cartManager.syncWithProfile) {
+                        await window.cartManager.syncWithProfile();
+                        if (window.updateCartCount) window.updateCartCount();
+                        if (window.updateCartDisplay) window.updateCartDisplay();
+                    }
+                    
+                    console.log('Auth state change handling completed');
+                } catch (error) {
+                    console.error('Error handling auth state change:', error);
                 }
             }
         });
@@ -86,9 +135,22 @@ class FirebaseManager {
 
     async initializeUserProfile() {
         try {
-            this.currentProfile = await this.profileManager.initializeProfile();
-            console.log('User profile initialized:', this.currentProfile?.type);
-            return this.currentProfile;
+            console.log('Initializing user profile...');
+            
+            if (!this.profileManager) {
+                throw new Error('Profile manager not available');
+            }
+            
+            const profile = await this.profileManager.initializeProfile();
+            
+            if (!profile) {
+                throw new Error('Profile manager returned null profile');
+            }
+            
+            this.currentProfile = profile;
+            console.log('User profile initialized successfully:', profile.type, profile.id);
+            
+            return profile;
         } catch (error) {
             console.error('Failed to initialize user profile:', error);
             throw error;
@@ -388,9 +450,9 @@ class FirebaseManager {
     // ===== IMPROVED ANALYTICS & EVENTS =====
     
     async logEvent(eventName, eventData = {}) {
-    // Analytics disabled - stub method
-    return Promise.resolve();
-}
+        // Analytics disabled - stub method
+        return Promise.resolve();
+    }
 
     // Generate unique event ID
     generateEventId() {
@@ -1076,6 +1138,20 @@ class FirebaseManager {
         });
         
         return exportData;
+    }
+
+    // ===== PROFILE STATUS CHECKER (for debugging) =====
+    
+    getProfileStatus() {
+        return {
+            firebase_initialized: this.isInitialized,
+            profile_manager_exists: !!this.profileManager,
+            current_profile_exists: !!this.currentProfile,
+            current_profile_type: this.currentProfile?.type,
+            current_profile_id: this.currentProfile?.id,
+            auth_user: this.auth?.currentUser?.email || 'none',
+            database_available: !!this.db
+        };
     }
 }
 
