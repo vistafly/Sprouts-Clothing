@@ -1168,9 +1168,7 @@ ul, ol {
 }
 
 .profile-modal-footer {
-    padding: 24px;
-    border-top: 1px solid #f0f0f0;
-    background: #fafafa;
+    padding: 5px;
 }
 
 /* Guest Profile Content */
@@ -1179,7 +1177,7 @@ ul, ol {
 }
 
 .profile-guest-info {
-    margin-bottom: 32px;
+    margin-bottom: 0px;
 }
 
 .profile-guest-icon {
@@ -1504,7 +1502,7 @@ ul, ol {
 
 /* Benefits Section */
 .signup-prompt-benefits {
-    margin-bottom: 32px;
+    margin-bottom: 10px;
 }
 
 .signup-benefit {
@@ -1710,12 +1708,6 @@ ul, ol {
     
     .profile-btn {
         min-width: auto;
-    }
-    
-    .signup-benefit {
-        flex-direction: column;
-        text-align: center;
-        gap: 8px;
     }
     
     .benefit-icon {

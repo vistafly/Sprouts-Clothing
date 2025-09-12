@@ -171,9 +171,9 @@
 .profile-modal-content, .signup-prompt-content {
     background: white;
     border-radius: 12px;
-    max-width: 1000px;
-    width: 90%;
-    max-height: 95vh;
+    width: 50%;
+    height: max-content;
+    max-height: 100vh;
     overflow-y: auto;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     transform: translateY(20px);
@@ -377,7 +377,7 @@ box-shadow:
 .profile-guest-content, .profile-registered-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0rem;
 }
 
 .profile-guest-info {
@@ -465,7 +465,7 @@ box-shadow:
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .signup-benefit {
@@ -687,12 +687,7 @@ box-shadow:
     .signup-prompt-benefits {
         gap: 0.75rem;
     }
-    
-    .signup-benefit {
-        flex-direction: column;
-        text-align: center;
-        gap: 0.5rem;
-    }
+
 }
 
 /* Animation for smooth transitions */
@@ -732,7 +727,7 @@ box-shadow:
                 <li><a href="#boys">Boys</a></li>
                 <li><a href="#girls">Girls</a></li>
                 <li><a href="#women">Women</a></li>
-                <li><a href="#contact">Contact</a></li>
+                <li><a href="#footer">Contact</a></li>
             </ul>
             
             <div class="header-actions">
@@ -787,7 +782,7 @@ box-shadow:
             <li><a href="#boys">Boys</a></li>
             <li><a href="#girls">Girls</a></li>
             <li><a href="#women">Women</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="#footer">Contact</a></li>
         </ul>
     </nav>
     
@@ -1021,7 +1016,7 @@ box-shadow:
     </div>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" id="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
