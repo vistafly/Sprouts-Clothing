@@ -734,15 +734,52 @@ box-shadow:
                     <span class="cart-count" id="cartCount">0</span>
                 </button>
                 
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
             </div>
         </nav>
     </header>
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <div class="mobile-menu-logo">All Seasons Sprouts</div>
+        <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+    
+    <nav class="mobile-menu-nav">
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#collections">Collections</a></li>
+            <li><a href="#boys">Boys</a></li>
+            <li><a href="#girls">Girls</a></li>
+            <li><a href="#women">Women</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+    
+    <div class="mobile-menu-footer">
+        <div class="mobile-menu-actions">
+            <button class="mobile-menu-btn primary" onclick="window.profileUI?.showProfileModal(); window.mobileMenuInstance?.close();">My Account</button>
+            <button class="mobile-menu-btn" onclick="openCart(); window.mobileMenuInstance?.close();">View Cart</button>
+        </div>
+        
+        <div class="mobile-menu-contact">
+            <p>Need help? Contact us:</p>
+            <p><a href="mailto:maezron54@gmail.com">maezron54@gmail.com</a></p>
+        </div>
+    </div>
+</div>
 
+<!-- Mobile Menu Overlay -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
     <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="hero-content">

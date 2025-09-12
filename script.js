@@ -962,8 +962,231 @@ function handleKeyboardShortcuts(e) {
     }
 }
 
+// ===== MOBILE MENU FUNCTIONALITY =====
+class MobileMenu {
+    constructor() {
+        this.menuButton = document.getElementById('mobileMenuBtn');
+        this.menu = document.getElementById('mobileMenu');
+        this.overlay = document.getElementById('mobileMenuOverlay');
+        this.closeButton = document.getElementById('mobileMenuClose');
+        this.menuLinks = document.querySelectorAll('.mobile-menu-nav a');
+        this.isOpen = false;
+        
+        this.init();
+    }
+    
+    init() {
+        if (!this.menuButton || !this.menu || !this.overlay) {
+            console.warn('Mobile menu elements not found');
+            return;
+        }
+
+        // Event listeners
+        this.menuButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggle();
+        });
+        
+        if (this.closeButton) {
+            this.closeButton.addEventListener('click', () => this.close());
+        }
+        
+        this.overlay.addEventListener('click', () => this.close());
+        
+        // Close menu when clicking nav links with filter routing
+        this.menuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                this.handleMobileNavClick(e, link);
+            });
+        });
+        
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+        
+        // Handle window resize - close menu if screen gets larger
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && this.isOpen) {
+                this.close();
+            }
+        });
+    }
+    
+    handleMobileNavClick(e, link) {
+        const href = link.getAttribute('href');
+        
+        // Map nav links to filter values (same as desktop)
+        const navToFilterMap = {
+            '#boys': 'boys',
+            '#girls': 'girls',
+            '#women': 'women',
+            '#collections': 'all'
+        };
+        
+        // Skip home and contact - just close menu
+        if (href === '#home' || href === '#contact') {
+            setTimeout(() => this.close(), 150);
+            return;
+        }
+        
+        // Handle filter routing
+        if (navToFilterMap[href]) {
+            e.preventDefault();
+            
+            // Close mobile menu immediately
+            this.close();
+            
+            // Find the collections section
+            const collectionsSection = document.querySelector('.collections-section') || 
+                                     document.getElementById('collections');
+            
+            if (collectionsSection) {
+                // Scroll to collections section with header offset
+                const headerHeight = 100;
+                const elementTop = collectionsSection.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementTop - headerHeight;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // Activate the correct filter tab after scroll
+            setTimeout(() => {
+                const targetFilter = navToFilterMap[href];
+                const targetTab = document.querySelector(`[data-filter="${targetFilter}"]`);
+                
+                if (targetTab) {
+                    // Simulate clicking the filter tab
+                    targetTab.click();
+                }
+                
+                // Log mobile navigation event
+                if (firebaseManager) {
+                    firebaseManager.logEvent('mobile_nav_filter_used', {
+                        filter: targetFilter,
+                        navigation_method: 'mobile_menu',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            }, 600); // Wait for scroll animation
+        } else {
+            // For other links, just close menu after a delay
+            setTimeout(() => this.close(), 150);
+        }
+    }
+    
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    }
+    
+    open() {
+        this.isOpen = true;
+        this.menu.classList.add('open');
+        this.overlay.classList.add('show');
+        this.menuButton.classList.add('active');
+        document.body.classList.add('mobile-menu-open');
+        
+        // Focus management for accessibility
+        if (this.closeButton) {
+            this.closeButton.focus();
+        }
+        
+        // Analytics tracking if available
+        if (firebaseManager) {
+            firebaseManager.logEvent('mobile_menu_opened', {
+                timestamp: new Date().toISOString(),
+                screen_width: window.innerWidth
+            });
+        }
+        
+        console.log('Mobile menu opened');
+    }
+    
+    close() {
+        this.isOpen = false;
+        this.menu.classList.remove('open');
+        this.overlay.classList.remove('show');
+        this.menuButton.classList.remove('active');
+        document.body.classList.remove('mobile-menu-open');
+        
+        // Return focus to menu button for accessibility
+        this.menuButton.focus();
+        
+        console.log('Mobile menu closed');
+    }
+    
+    // Public method to check if menu is open
+    getIsOpen() {
+        return this.isOpen;
+    }
+}
+
+// Initialize mobile menu and make it globally available
+let mobileMenuInstance = null;
+
+// Update your existing setupEventListeners function
+function setupEventListeners() {
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', handleFilterChange);
+    });
+
+    cartBtn.addEventListener('click', openCart);
+    cartClose.addEventListener('click', closeCart);
+    cartOverlay.addEventListener('click', closeCart);
+    checkoutBtn.addEventListener('click', proceedToCheckout);
+
+    const heroCTA = document.querySelector('.hero-cta');
+    if (heroCTA) {
+        heroCTA.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('collections').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        });
+    }
+
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+
+    // Initialize mobile menu instead of the old event listener
+    mobileMenuInstance = new MobileMenu();
+    
+    // Make it globally available
+    window.mobileMenuInstance = mobileMenuInstance;
+}
+
+// Remove the old toggleMobileMenu function completely and replace with:
 function toggleMobileMenu() {
-    console.log('Mobile menu toggle (to be implemented)');
+    if (mobileMenuInstance) {
+        mobileMenuInstance.toggle();
+    }
+}
+
+// Update your handleKeyboardShortcuts function to include mobile menu
+function handleKeyboardShortcuts(e) {
+    if (e.key === 'Escape') {
+        if (cartSidebar.classList.contains('open')) {
+            closeCart();
+        }
+        if (profileUI && document.getElementById('profileModal')?.classList.contains('show')) {
+            profileUI.closeProfileModal();
+        }
+        if (profileUI && document.getElementById('signupPromptModal')?.classList.contains('show')) {
+            profileUI.closeSignupPrompt();
+        }
+        // Add mobile menu escape handling
+        if (mobileMenuInstance && mobileMenuInstance.getIsOpen()) {
+            mobileMenuInstance.close();
+        }
+    }
 }
 
 function scheduleDailyReport() {
